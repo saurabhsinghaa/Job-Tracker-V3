@@ -1,1277 +1,295 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="dark">
-  <title>Job Tracker</title>
-  <link rel="icon" type="image/png" href="./favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-  <link rel="shortcut icon" href="./favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-  <link rel="manifest" href="./site.webmanifest" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
-    rel="stylesheet">
-  <style>
-    /* Layout: sticky top bar, three views (Applications / Analytics / Settings), bottom tab bar on phones, sheets for form + detail. */
-    :root {
-      --bg: #0e1220;
-      --surface: #161b2e;
-      --surface-2: #1d2339;
-      --line: #2a3250;
-      --text: #e8ebf5;
-      --muted: #9099b5;
-      --accent: #f0b25e;
-      --accent-ink: #1c1405;
-      --danger: #ef6b73;
-      --ok: #5ed38f;
-      --info: #6ea8fe;
-      --font-display: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
-      --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-      --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
-      color-scheme: dark;
-    }
-
-    * {
-      box-sizing: border-box
-    }
-
-    html {
-      background: var(--bg)
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 15px/1.5 var(--font-body);
-      -webkit-text-size-adjust: 100%
-    }
-
-    body.lock {
-      overflow: hidden
-    }
-
-    h1,
-    h2,
-    h3 {
-      font-family: var(--font-display);
-      margin: 0;
-      text-wrap: balance;
-      letter-spacing: -.01em
-    }
-
-    p {
-      margin: 0
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-      color: inherit
-    }
-
-    button {
-      cursor: pointer
-    }
-
-    :focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px
-    }
-
-    [hidden] {
-      display: none !important
-    }
-
-    .wrap {
-      width: 100%;
-      max-width: 1120px;
-      margin: 0 auto;
-      padding-inline: 16px
-    }
-
-    .mono {
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums
-    }
-
-    /* top bar */
-    .top {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: color-mix(in srgb, var(--bg) 92%, transparent);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--line);
-      padding-top: env(safe-area-inset-top, 0px)
-    }
-
-    .topin {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      min-height: 60px;
-      padding-block: 8px
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      flex: 1
-    }
-
-    .mark {
-      display: grid;
-      place-items: center;
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
-      background: var(--accent);
-      color: var(--accent-ink);
-      font: 700 14px var(--font-display);
-      flex: none
-    }
-
-    .brand h1 {
-      font-size: 18px;
-      line-height: 1.1
-    }
-
-    .brand p {
-      font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis
-    }
-
-    .topact {
-      display: flex;
-      align-items: center;
-      gap: 10px
-    }
-
-    .sync {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font: 500 11px var(--font-mono);
-      color: var(--muted);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 4px 10px;
-      white-space: nowrap
-    }
-
-    .sync i {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--muted)
-    }
-
-    .sync.ok i {
-      background: var(--ok)
-    }
-
-    .sync.ok {
-      color: var(--ok)
-    }
-
-    .sync.err i {
-      background: var(--danger)
-    }
-
-    .sync.err {
-      color: var(--danger)
-    }
-
-    /* tabs */
-    .tabs {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 30;
-      display: flex;
-      background: var(--surface);
-      border-top: 1px solid var(--line);
-      padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px))
-    }
-
-    .tab {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      background: none;
-      border: 0;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 500;
-      padding: 6px 4px;
-      border-radius: 10px
-    }
-
-    .tab svg {
-      width: 20px;
-      height: 20px
-    }
-
-    .tab[aria-selected="true"] {
-      color: var(--accent)
-    }
-
-    @media(min-width:820px) {
-      .tabs {
-        position: static;
-        border: 0;
-        background: none;
-        padding: 0;
-        flex: none;
-        gap: 4px
-      }
-
-      .tab {
-        flex-direction: row;
-        gap: 8px;
-        font-size: 14px;
-        padding: 8px 14px
-      }
-
-      .tab[aria-selected="true"] {
-        background: var(--surface-2)
-      }
-
-      .tab svg {
-        width: 17px;
-        height: 17px
-      }
-    }
-
-    main {
-      padding-block: 20px 120px
-    }
-
-    @media(min-width:820px) {
-      main {
-        padding-bottom: 60px
-      }
-    }
-
-    /* buttons / inputs */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      border: 1px solid var(--line);
-      background: var(--surface-2);
-      border-radius: 10px;
-      padding: 9px 14px;
-      font-weight: 500;
-      font-size: 14px;
-      min-height: 40px
-    }
-
-    .btn:hover {
-      border-color: var(--muted)
-    }
-
-    .btn.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--accent-ink);
-      font-weight: 600
-    }
-
-    .btn.primary:hover {
-      filter: brightness(1.07)
-    }
-
-    .btn.danger {
-      color: var(--danger);
-      border-color: color-mix(in srgb, var(--danger) 45%, var(--line))
-    }
-
-    .btn.danger.armed {
-      background: var(--danger);
-      color: #25080a;
-      border-color: var(--danger)
-    }
-
-    .btn.sm {
-      min-height: 34px;
-      padding: 6px 10px;
-      font-size: 13px
-    }
-
-    .desk {
-      display: none
-    }
-
-    @media(min-width:820px) {
-      .desk {
-        display: inline-flex
-      }
-
-      .fab {
-        display: none !important
-      }
-    }
-
-    .fab {
-      position: fixed;
-      right: 16px;
-      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-      z-index: 25;
-      width: 54px;
-      height: 54px;
-      border-radius: 16px;
-      border: 0;
-      background: var(--accent);
-      color: var(--accent-ink);
-      font-size: 28px;
-      line-height: 1;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .45)
-    }
-
-    .icon-btn {
-      background: none;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      width: 36px;
-      height: 36px;
-      color: var(--muted);
-      font-size: 20px;
-      line-height: 1;
-      flex: none
-    }
-
-    .icon-btn:hover {
-      color: var(--danger);
-      border-color: var(--danger)
-    }
-
-    input[type=text],
-    input[type=url],
-    input[type=email],
-    input[type=tel],
-    input[type=number],
-    input[type=date],
-    input[type=search],
-    select,
-    textarea {
-      width: 100%;
-      min-width: 0;
-      background: var(--bg);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 16px;
-      min-height: 42px
-    }
-
-    textarea {
-      resize: vertical;
-      line-height: 1.5
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--accent);
-      outline: none
-    }
-
-    label.f {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 500;
-      min-width: 0
-    }
-
-    label.f .req {
-      color: var(--accent)
-    }
-
-    /* toolbar + chips */
-    .toolbar {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 16px
-    }
-
-    .toolrow {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap
-    }
-
-    .toolrow .search {
-      flex: 1 1 220px;
-      min-width: 0
-    }
-
-    .toolrow select {
-      flex: 0 1 200px
-    }
-
-    .chips {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none
-    }
-
-    .chips::-webkit-scrollbar {
-      display: none
-    }
-
-    .chip {
-      flex: none;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 13px;
-      font-weight: 500;
-      display: inline-flex;
-      gap: 8px;
-      align-items: center
-    }
-
-    .chip b {
-      font: 500 11px var(--font-mono);
-      color: var(--muted)
-    }
-
-    .chip[aria-pressed="true"] {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--accent-ink)
-    }
-
-    .chip[aria-pressed="true"] b {
-      color: var(--accent-ink)
-    }
-
-    .summary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 14px;
-      align-items: center;
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 12px
-    }
-
-    .summary .warn {
-      color: var(--accent)
-    }
-
-    /* cards */
-    .list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-      gap: 12px
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 0;
-      cursor: pointer;
-      transition: border-color .15s, transform .15s
-    }
-
-    .card:hover {
-      border-color: var(--muted)
-    }
-
-    .card:active {
-      transform: scale(.995)
-    }
-
-    .ch {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      min-width: 0
-    }
-
-    .av {
-      width: 42px;
-      height: 42px;
-      border-radius: 11px;
-      display: grid;
-      place-items: center;
-      font: 700 17px var(--font-display);
-      flex: none;
-      background: hsl(var(--h) 38% 22%);
-      color: hsl(var(--h) 85% 80%)
-    }
-
-    .ct {
-      min-width: 0;
-      flex: 1
-    }
-
-    .ct h3 {
-      font-size: 16px;
-      line-height: 1.25;
-      overflow-wrap: anywhere
-    }
-
-    .ct p {
-      color: var(--muted);
-      font-size: 13px;
-      overflow-wrap: anywhere
-    }
-
-    .pill {
-      --c: var(--muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--c);
-      background: color-mix(in srgb, var(--c) 15%, transparent);
-      border: 1px solid color-mix(in srgb, var(--c) 38%, transparent);
-      border-radius: 999px;
-      padding: 2px 9px;
-      white-space: nowrap;
-      flex: none
-    }
-
-    .pill::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--c)
-    }
-
-    .meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px 12px;
-      font-size: 12.5px;
-      color: var(--muted)
-    }
-
-    .meta span {
-      white-space: nowrap
-    }
-
-    .cf {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      border-top: 1px solid var(--line);
-      padding-top: 10px;
-      font-size: 12.5px;
-      color: var(--muted);
-      min-width: 0
-    }
-
-    .cf .next {
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0
-    }
-
-    .cf .next em {
-      font-style: normal;
-      color: var(--accent)
-    }
-
-    .flag {
-      color: var(--accent);
-      font-weight: 600
-    }
-
-    .flag.late {
-      color: var(--danger)
-    }
-
-    .prio {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px
-    }
-
-    .prio.High {
-      background: var(--danger)
-    }
-
-    .prio.Medium {
-      background: var(--accent)
-    }
-
-    .prio.Low {
-      background: var(--muted)
-    }
-
-    .empty {
-      grid-column: 1/-1;
-      border: 1px dashed var(--line);
-      border-radius: 16px;
-      padding: 40px 20px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: center
-    }
-
-    .empty h3 {
-      font-size: 20px
-    }
-
-    .empty p {
-      color: var(--muted);
-      max-width: 44ch
-    }
-
-    .empty .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center
-    }
-
-    /* sheets */
-    .scrim {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      background: rgba(5, 8, 18, .7);
-      display: flex;
-      align-items: flex-end;
-      justify-content: center
-    }
-
-    .sheet {
-      background: var(--surface);
-      width: 100%;
-      max-height: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid var(--line)
-    }
-
-    .sheet-h {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
-      border-bottom: 1px solid var(--line)
-    }
-
-    .sheet-h h2 {
-      font-size: 19px;
-      min-width: 0;
-      overflow-wrap: anywhere
-    }
-
-    .sheet-b {
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-      flex: 1
-    }
-
-    .sheet-f {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid var(--line);
-      background: var(--surface)
-    }
-
-    @media(min-width:820px) {
-      .scrim {
-        align-items: center;
-        padding: 24px
-      }
-
-      .sheet {
-        max-width: 760px;
-        height: auto;
-        max-height: 100%;
-        border-radius: 18px
-      }
-
-      .sheet-h {
-        padding-top: 14px
-      }
-    }
-
-    fieldset {
-      border: 0;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-width: 0
-    }
-
-    legend {
-      padding: 0;
-      margin-bottom: 12px;
-      font: 600 12px var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--accent)
-    }
-
-    .g2 {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px
-    }
-
-    @media(min-width:600px) {
-      .g2 {
-        grid-template-columns: 1fr 1fr
-      }
-
-      .g3 {
-        grid-template-columns: repeat(3, 1fr)
-      }
-    }
-
-    .g2>* {
-      min-width: 0
-    }
-
-    .step-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      background: var(--bg);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px
-    }
-
-    .step-row .s-notes {
-      grid-column: 1/-1
-    }
-
-    .step-row .s-del {
-      justify-self: end;
-      grid-column: 2;
-      grid-row: 1
-    }
-
-    @media(min-width:600px) {
-      .step-row {
-        grid-template-columns: 1.3fr 1fr 1fr 36px
-      }
-
-      .step-row .s-notes {
-        grid-column: 1/4;
-        grid-row: 2
-      }
-
-      .step-row .s-del {
-        grid-column: 4;
-        grid-row: 1
-      }
-    }
-
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 10px
-    }
-
-    /* detail */
-    .facts {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 14px 18px
-    }
-
-    .fact dt {
-      font: 500 11px var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--muted);
-      margin-bottom: 2px
-    }
-
-    .fact dd {
-      margin: 0;
-      overflow-wrap: anywhere
-    }
-
-    .fact a {
-      color: var(--accent)
-    }
-
-    .sec h4 {
-      margin: 0 0 10px;
-      font: 600 12px var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--accent)
-    }
-
-    .prose {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      background: var(--bg);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      max-height: 340px;
-      overflow: auto;
-      font-size: 14px
-    }
-
-    .tl {
-      list-style: none;
-      margin: 0;
-      padding: 0 0 0 18px;
-      border-left: 2px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      gap: 14px
-    }
-
-    .tl li {
-      position: relative;
-      min-width: 0
-    }
-
-    .tl li::before {
-      content: "";
-      position: absolute;
-      left: -25px;
-      top: 5px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--c, var(--muted));
-      border: 2px solid var(--surface)
-    }
-
-    .tl .t {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 10px;
-      align-items: center
-    }
-
-    .tl .t b {
-      font-weight: 600
-    }
-
-    .tl .d {
-      font: 400 12px var(--font-mono);
-      color: var(--muted)
-    }
-
-    .tl p {
-      color: var(--muted);
-      font-size: 13.5px;
-      overflow-wrap: anywhere;
-      margin-top: 2px
-    }
-
-    .qs {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap
-    }
-
-    .qs select {
-      width: auto;
-      min-height: 36px;
-      padding: 6px 10px;
-      font-size: 14px
-    }
-
-    /* analytics */
-    .kpis {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 12px
-    }
-
-    @media(min-width:700px) {
-      .kpis {
-        grid-template-columns: repeat(3, 1fr)
-      }
-    }
-
-    @media(min-width:1000px) {
-      .kpis {
-        grid-template-columns: repeat(6, 1fr)
-      }
-    }
-
-    .kpi {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      min-width: 0
-    }
-
-    .kpi .l {
-      font: 500 11px var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--muted)
-    }
-
-    .kpi .v {
-      font: 600 28px/1.15 var(--font-display);
-      margin-top: 6px;
-      overflow-wrap: anywhere
-    }
-
-    .kpi .s {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px
-    }
-
-    .charts {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px
-    }
-
-    @media(min-width:820px) {
-      .charts {
-        grid-template-columns: 1fr 1fr
-      }
-
-      .charts .wide {
-        grid-column: 1/-1
-      }
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 16px;
-      min-width: 0
-    }
-
-    .panel h3 {
-      font-size: 16px;
-      margin-bottom: 2px
-    }
-
-    .panel .sub {
-      font-size: 12.5px;
-      color: var(--muted);
-      margin-bottom: 12px
-    }
-
-    .cw {
-      position: relative;
-      height: 250px
-    }
-
-    .cw.tall {
-      height: 290px
-    }
-
-    .cnone {
-      height: 150px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-      border: 1px dashed var(--line);
-      border-radius: 10px;
-      padding: 10px
-    }
-
-    .att {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column
-    }
-
-    .att li {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      padding: 10px 0;
-      border-top: 1px solid var(--line);
-      cursor: pointer;
-      min-width: 0
-    }
-
-    .att li:first-child {
-      border-top: 0
-    }
-
-    .att b {
-      font-weight: 600;
-      overflow-wrap: anywhere
-    }
-
-    .att span {
-      font-size: 13px;
-      color: var(--muted);
-      text-align: right
-    }
-
-    /* settings */
-    .set {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-width: 760px
-    }
-
-    .set ol {
-      margin: 0;
-      padding-left: 20px;
-      color: var(--muted);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 14px
-    }
-
-    .set code,
-    .rules {
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      background: var(--bg);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 1px 6px
-    }
-
-    .rules {
-      display: block;
-      white-space: pre;
-      overflow-x: auto;
-      padding: 10px 12px;
-      border-radius: 10px;
-      color: var(--text)
-    }
-
-    .set .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap
-    }
-
-    .note {
-      font-size: 13px;
-      color: var(--muted)
-    }
-
-    .note.bad {
-      color: var(--danger)
-    }
-
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: calc(86px + env(safe-area-inset-bottom, 0px));
-      transform: translateX(-50%);
-      z-index: 80;
-      background: var(--text);
-      color: var(--bg);
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-weight: 500;
-      font-size: 14px;
-      max-width: calc(100% - 32px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .5)
-    }
-
-    @media(min-width:820px) {
-      .toast {
-        bottom: 28px
-      }
-    }
-
-    @media(prefers-reduced-motion:reduce) {
-      * {
-        transition: none !important
-      }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Job Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: sticky top bar, three views (Applications / Analytics / Settings), bottom tab bar on phones, sheets for form + detail. */
+:root{
+  --bg:#0e1220;
+  --surface:#161b2e;
+  --surface-2:#1d2339;
+  --line:#2a3250;
+  --text:#e8ebf5;
+  --muted:#9099b5;
+  --accent:#f0b25e;
+  --accent-ink:#1c1405;
+  --danger:#ef6b73;
+  --ok:#5ed38f;
+  --info:#6ea8fe;
+  --font-display:"Bricolage Grotesque","DM Sans",system-ui,sans-serif;
+  --font-body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font-body);-webkit-text-size-adjust:100%}
+body.lock{overflow:hidden}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{width:100%;max-width:1120px;margin:0 auto;padding-inline:16px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topin{display:flex;align-items:center;gap:16px;min-height:60px;padding-block:8px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.mark{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font:700 14px var(--font-display);flex:none}
+.brand h1{font-size:18px;line-height:1.1}
+.brand p{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topact{display:flex;align-items:center;gap:10px}
+.sync{display:inline-flex;align-items:center;gap:6px;font:500 11px var(--font-mono);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.sync.ok i{background:var(--ok)}.sync.ok{color:var(--ok)}
+.sync.err i{background:var(--danger)}.sync.err{color:var(--danger)}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:var(--muted);font-size:11px;font-weight:500;padding:6px 4px;border-radius:10px}
+.tab svg{width:20px;height:20px}
+.tab[aria-selected="true"]{color:var(--accent)}
+@media(min-width:820px){
+  .tabs{position:static;border:0;background:none;padding:0;flex:none;gap:4px}
+  .tab{flex-direction:row;gap:8px;font-size:14px;padding:8px 14px}
+  .tab[aria-selected="true"]{background:var(--surface-2)}
+  .tab svg{width:17px;height:17px}
+}
+
+main{padding-block:20px 120px}
+@media(min-width:820px){main{padding-bottom:60px}}
+
+/* buttons / inputs */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:9px 14px;font-weight:500;font-size:14px;min-height:40px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,var(--line))}
+.btn.danger.armed{background:var(--danger);color:#25080a;border-color:var(--danger)}
+.btn.sm{min-height:34px;padding:6px 10px;font-size:13px}
+.desk{display:none}
+@media(min-width:820px){.desk{display:inline-flex}.fab{display:none!important}}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:25;width:54px;height:54px;border-radius:16px;border:0;background:var(--accent);color:var(--accent-ink);font-size:28px;line-height:1;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.icon-btn{background:none;border:1px solid var(--line);border-radius:8px;width:36px;height:36px;color:var(--muted);font-size:20px;line-height:1;flex:none}
+.icon-btn:hover{color:var(--danger);border-color:var(--danger)}
+input[type=text],input[type=password],input[type=url],input[type=email],input[type=tel],input[type=number],input[type=date],input[type=search],select,textarea{width:100%;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;min-height:42px}
+textarea{resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);font-weight:500;min-width:0}
+label.f .req{color:var(--accent)}
+
+/* toolbar + chips */
+.toolbar{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.toolrow{display:flex;gap:10px;flex-wrap:wrap}
+.toolrow .search{flex:1 1 220px;min-width:0}
+.toolrow select{flex:0 1 200px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;display:inline-flex;gap:8px;align-items:center}
+.chip b{font:500 11px var(--font-mono);color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip[aria-pressed="true"] b{color:var(--accent-ink)}
+.summary{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:12px}
+.summary .warn{color:var(--accent)}
+
+/* cards */
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0;cursor:pointer;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--muted)}
+.card:active{transform:scale(.995)}
+.ch{display:flex;gap:12px;align-items:flex-start;min-width:0}
+.av{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font:700 17px var(--font-display);flex:none;background:hsl(var(--h) 38% 22%);color:hsl(var(--h) 85% 80%)}
+.ct{min-width:0;flex:1}
+.ct h3{font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+.ct p{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.pill{--c:var(--muted);display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);border:1px solid color-mix(in srgb,var(--c) 38%,transparent);border-radius:999px;padding:2px 9px;white-space:nowrap;flex:none}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--muted)}
+.meta span{white-space:nowrap}
+.cf{display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px;font-size:12.5px;color:var(--muted);min-width:0}
+.cf .next{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cf .next em{font-style:normal;color:var(--accent)}
+.flag{color:var(--accent);font-weight:600}
+.flag.late{color:var(--danger)}
+.prio{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.prio.High{background:var(--danger)}.prio.Medium{background:var(--accent)}.prio.Low{background:var(--muted)}
+
+.empty{grid-column:1/-1;border:1px dashed var(--line);border-radius:16px;padding:40px 20px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty h3{font-size:20px}
+.empty p{color:var(--muted);max-width:44ch}
+.empty .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+/* sheets */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(5,8,18,.7);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-height:100%;height:100%;display:flex;flex-direction:column;border:1px solid var(--line)}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;border-bottom:1px solid var(--line)}
+.sheet-h h2{font-size:19px;min-width:0;overflow-wrap:anywhere}
+.sheet-b{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:22px;flex:1}
+.sheet-f{display:flex;gap:10px;justify-content:flex-end;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface)}
+@media(min-width:820px){
+  .scrim{align-items:center;padding:24px}
+  .sheet{max-width:760px;height:auto;max-height:100%;border-radius:18px}
+  .sheet-h{padding-top:14px}
+}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;min-width:0}
+legend{padding:0;margin-bottom:12px;font:600 12px var(--font-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.g2{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:600px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+.g2>*{min-width:0}
+.step-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px}
+.step-row .s-notes{grid-column:1/-1}
+.step-row .s-del{justify-self:end;grid-column:2;grid-row:1}
+@media(min-width:600px){
+  .step-row{grid-template-columns:1.3fr 1fr 1fr 36px}
+  .step-row .s-notes{grid-column:1/4;grid-row:2}
+  .step-row .s-del{grid-column:4;grid-row:1}
+}
+.steps{display:flex;flex-direction:column;gap:10px}
+
+/* detail */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 18px}
+.fact dt{font:500 11px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px}
+.fact dd{margin:0;overflow-wrap:anywhere}
+.fact a{color:var(--accent)}
+.sec h4{margin:0 0 10px;font:600 12px var(--font-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.prose{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;max-height:340px;overflow:auto;font-size:14px}
+.cp{display:flex;gap:6px;align-items:stretch;min-width:0}
+.cp input{flex:1;min-width:0}
+.cp .btn{flex:none}
+.creds{display:flex;flex-direction:column;gap:8px}
+.cred{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 12px;min-width:0}
+.cred .k{flex:none;width:70px;font:500 11px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.cred .v{flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px}
+.cred a.v{color:var(--accent)}
+.cred .btn{flex:none}
+.tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.tl li{position:relative;min-width:0}
+.tl li::before{content:"";position:absolute;left:-25px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--c,var(--muted));border:2px solid var(--surface)}
+.tl .t{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.tl .t b{font-weight:600}
+.tl .d{font:400 12px var(--font-mono);color:var(--muted)}
+.tl p{color:var(--muted);font-size:13.5px;overflow-wrap:anywhere;margin-top:2px}
+.qs{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.qs select{width:auto;min-height:36px;padding:6px 10px;font-size:14px}
+
+/* analytics */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media(min-width:700px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1000px){.kpis{grid-template-columns:repeat(6,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.kpi .l{font:500 11px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.kpi .v{font:600 28px/1.15 var(--font-display);margin-top:6px;overflow-wrap:anywhere}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.charts{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:820px){.charts{grid-template-columns:1fr 1fr}.charts .wide{grid-column:1/-1}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.panel h3{font-size:16px;margin-bottom:2px}
+.panel .sub{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.cw{position:relative;height:250px}
+.cw.tall{height:290px}
+.cnone{height:150px;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:10px;padding:10px}
+.att{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.att li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);cursor:pointer;min-width:0}
+.att li:first-child{border-top:0}
+.att b{font-weight:600;overflow-wrap:anywhere}
+.att span{font-size:13px;color:var(--muted);text-align:right}
+
+/* settings */
+.set{display:flex;flex-direction:column;gap:12px;max-width:760px}
+.set ol{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:6px;font-size:14px}
+.set code,.rules{font-family:var(--font-mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.rules{display:block;white-space:pre;overflow-x:auto;padding:10px 12px;border-radius:10px;color:var(--text)}
+.set .row{display:flex;gap:10px;flex-wrap:wrap}
+.note{font-size:13px;color:var(--muted)}
+.note.bad{color:var(--danger)}
+
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;font-size:14px;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+@media(min-width:820px){.toast{bottom:28px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
 </head>
-
 <body>
 
-  <header class="top">
-    <div class="wrap topin">
-      <div class="brand">
-        <span class="mark" aria-hidden="true">JT</span>
-        <div>
-          <h1>Job Tracker</h1>
-          <p id="sub">Your search, in one place</p>
-        </div>
-      </div>
-      <nav class="tabs" id="tabs" aria-label="Sections">
-        <button class="tab" role="tab" data-tab="apps" aria-selected="true"><svg viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="16" rx="3" />
-            <path d="M8 9h8M8 13h8M8 17h4" />
-          </svg>Applications</button>
-        <button class="tab" role="tab" data-tab="stats" aria-selected="false"><svg viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
-          </svg>Analytics</button>
-        <button class="tab" role="tab" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path
-              d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-          </svg>Storage</button>
-      </nav>
-      <div class="topact">
-        <span class="sync" id="sync"><i></i><span>Local</span></span>
-        <button class="btn primary desk" id="btn-new">+ New application</button>
-      </div>
+<header class="top">
+  <div class="wrap topin">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">JT</span>
+      <div><h1>Job Tracker</h1><p id="sub">Your search, in one place</p></div>
     </div>
-  </header>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="apps" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>Applications</button>
+      <button class="tab" role="tab" data-tab="stats" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</button>
+      <button class="tab" role="tab" data-tab="set" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Storage</button>
+    </nav>
+    <div class="topact">
+      <span class="sync" id="sync"><i></i><span>Local</span></span>
+      <button class="btn primary desk" id="btn-new">+ New application</button>
+    </div>
+  </div>
+</header>
 
-  <main class="wrap">
+<main class="wrap">
 
-    <!-- Applications -->
-    <section id="view-apps">
-      <div class="toolbar">
-        <div class="toolrow">
-          <input class="search" id="q" type="search" placeholder="Search company, role, location, notes"
-            aria-label="Search applications">
-          <select id="sort" aria-label="Sort applications">
-            <option value="applied-desc">Newest applied</option>
-            <option value="applied-asc">Oldest applied</option>
-            <option value="company">Company A to Z</option>
-            <option value="priority">Priority</option>
-            <option value="followup">Follow-up date</option>
-            <option value="updated">Recently updated</option>
-          </select>
-        </div>
-        <div class="chips" id="chips" role="group" aria-label="Filter by stage"></div>
+  <!-- Applications -->
+  <section id="view-apps">
+    <div class="toolbar">
+      <div class="toolrow">
+        <input class="search" id="q" type="search" placeholder="Search company, role, location, notes" aria-label="Search applications">
+        <select id="sort" aria-label="Sort applications">
+          <option value="applied-desc">Newest applied</option>
+          <option value="applied-asc">Oldest applied</option>
+          <option value="company">Company A to Z</option>
+          <option value="priority">Priority</option>
+          <option value="followup">Follow-up date</option>
+          <option value="updated">Recently updated</option>
+        </select>
       </div>
-      <div class="summary" id="summary"></div>
-      <div class="list" id="list"></div>
-    </section>
+      <div class="chips" id="chips" role="group" aria-label="Filter by stage"></div>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div class="list" id="list"></div>
+  </section>
 
-    <!-- Analytics -->
-    <section id="view-stats" hidden>
-      <div class="kpis" id="kpis"></div>
-      <div class="charts">
-        <div class="panel wide" id="p-att">
-          <h3>Needs attention</h3>
-          <p class="sub">Follow-ups due in the next 2 days, and applications with no reply for 14+ days.</p>
-          <ul class="att" id="att"></ul>
-        </div>
-        <div class="panel">
-          <h3>Where applications stand</h3>
-          <p class="sub">Current status of every application.</p>
-          <div class="cw" id="w-status"><canvas id="c-status"></canvas></div>
-        </div>
-        <div class="panel">
-          <h3>Hiring funnel</h3>
-          <p class="sub">How far applications got, as a share of everything you applied to.</p>
-          <div class="cw" id="w-funnel"><canvas id="c-funnel"></canvas></div>
-        </div>
-        <div class="panel wide">
-          <h3>Applications per week</h3>
-          <p class="sub">Last 12 weeks, by date applied. Weeks start on Monday.</p>
-          <div class="cw" id="w-weekly"><canvas id="c-weekly"></canvas></div>
-        </div>
-        <div class="panel">
-          <h3>Source performance</h3>
-          <p class="sub">Where you apply, and which sources got you to an interview.</p>
-          <div class="cw tall" id="w-source"><canvas id="c-source"></canvas></div>
-        </div>
-        <div class="panel">
-          <h3>Interview rounds</h3>
-          <p class="sub">Outcome of each round type you logged.</p>
-          <div class="cw tall" id="w-rounds"><canvas id="c-rounds"></canvas></div>
-        </div>
-        <div class="panel">
-          <h3>Work mode</h3>
-          <p class="sub">Remote, hybrid or onsite.</p>
-          <div class="cw" id="w-mode"><canvas id="c-mode"></canvas></div>
-        </div>
-        <div class="panel">
-          <h3>Response by priority</h3>
-          <p class="sub">Share of applications that got any reply, by the priority you gave them.</p>
-          <div class="cw" id="w-prio"><canvas id="c-prio"></canvas></div>
-        </div>
+  <!-- Analytics -->
+  <section id="view-stats" hidden>
+    <div class="kpis" id="kpis"></div>
+    <div class="charts">
+      <div class="panel wide" id="p-att"><h3>Needs attention</h3><p class="sub">Follow-ups due in the next 2 days, and applications with no reply for 14+ days.</p><ul class="att" id="att"></ul></div>
+      <div class="panel"><h3>Where applications stand</h3><p class="sub">Current status of every application.</p><div class="cw" id="w-status"><canvas id="c-status"></canvas></div></div>
+      <div class="panel"><h3>Hiring funnel</h3><p class="sub">How far applications got, as a share of everything you applied to.</p><div class="cw" id="w-funnel"><canvas id="c-funnel"></canvas></div></div>
+      <div class="panel wide"><h3>Applications per week</h3><p class="sub">Last 12 weeks, by date applied. Weeks start on Monday.</p><div class="cw" id="w-weekly"><canvas id="c-weekly"></canvas></div></div>
+      <div class="panel"><h3>Source performance</h3><p class="sub">Where you apply, and which sources got you to an interview.</p><div class="cw tall" id="w-source"><canvas id="c-source"></canvas></div></div>
+      <div class="panel"><h3>Interview rounds</h3><p class="sub">Outcome of each round type you logged.</p><div class="cw tall" id="w-rounds"><canvas id="c-rounds"></canvas></div></div>
+      <div class="panel"><h3>Work mode</h3><p class="sub">Remote, hybrid or onsite.</p><div class="cw" id="w-mode"><canvas id="c-mode"></canvas></div></div>
+      <div class="panel"><h3>Response by priority</h3><p class="sub">Share of applications that got any reply, by the priority you gave them.</p><div class="cw" id="w-prio"><canvas id="c-prio"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- Storage -->
+  <section id="view-set" hidden>
+    <div class="set">
+      <div class="panel">
+        <h3>Where your data lives</h3>
+        <p class="note" id="store-status" style="margin:6px 0 0"></p>
       </div>
-    </section>
-
-    <!-- Storage -->
-    <section id="view-set" hidden>
-      <div class="set">
-        <div class="panel">
-          <h3>Where your data lives</h3>
-          <p class="note" id="store-status" style="margin:6px 0 0"></p>
-        </div>
-        <div class="panel" style="display:flex;flex-direction:column;gap:12px">
-          <h3>Connect Firebase</h3>
-          <ol>
-            <li>In the Firebase console, create a project and add <code>Firestore Database</code> in production or test
-              mode.</li>
-            <li>Under Project settings, register a Web app and copy the <code>firebaseConfig</code> object.</li>
-            <li>Paste it below and press Connect. The page reloads and syncs live.</li>
-            <li>In Firestore, open the Rules tab, paste the rules below and press Publish. This tracker has no sign-in,
-              so these rules allow access without one. Anyone who has your Firebase config can read and write this
-              collection, so keep the config private.</li>
-          </ol>
-          <code class="rules">rules_version = '2';
+      <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+        <h3>Connect Firebase</h3>
+        <ol>
+          <li>In the Firebase console, create a project and add <code>Firestore Database</code> in production or test mode.</li>
+          <li>Under Project settings, register a Web app and copy the <code>firebaseConfig</code> object.</li>
+          <li>Paste it below and press Connect. The page reloads and syncs live.</li>
+          <li>In Firestore, open the Rules tab, paste the rules below and press Publish. This tracker has no sign-in, so these rules allow access without one. Anyone who has your Firebase config can read and write this collection, so keep the config private.</li>
+        </ol>
+        <code class="rules">rules_version = '2';
 service cloud.firestore {
   match /databases/{db}/documents {
     match /jobApplications/{id} {
@@ -1279,787 +297,792 @@ service cloud.firestore {
     }
   }
 }</code>
-          <label class="f">Firebase config
-            <textarea id="cfg" rows="8"
-              placeholder='{ apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." }'
-              spellcheck="false" style="font-family:var(--font-mono);font-size:13px"></textarea>
-          </label>
-          <p class="note bad" id="cfg-err" hidden></p>
+        <label class="f">Firebase config
+          <textarea id="cfg" rows="8" placeholder='{ apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." }' spellcheck="false" style="font-family:var(--font-mono);font-size:13px"></textarea>
+        </label>
+        <p class="note bad" id="cfg-err" hidden></p>
+        <div class="row">
+          <button class="btn primary" id="cfg-save">Connect</button>
+          <button class="btn danger" id="cfg-off" hidden>Disconnect</button>
+          <button class="btn" id="cfg-up" hidden>Copy local data to Firebase</button>
+        </div>
+      </div>
+      <div class="panel" id="perm" style="display:flex;flex-direction:column;gap:12px" hidden>
+        <h3>Keep this connection permanently</h3>
+        <p class="note" id="perm-note">The config is currently kept in this browser, so clearing site data removes it. Save it into the file itself and it stays, even on a fresh browser.</p>
+        <div id="perm-tools" style="display:flex;flex-direction:column;gap:12px">
           <div class="row">
-            <button class="btn primary" id="cfg-save">Connect</button>
-            <button class="btn danger" id="cfg-off" hidden>Disconnect</button>
-            <button class="btn" id="cfg-up" hidden>Copy local data to Firebase</button>
+            <button class="btn primary" id="perm-dl">Download file with config saved</button>
+            <button class="btn" id="perm-copy">Copy config line</button>
           </div>
-        </div>
-        <div class="panel" id="perm" style="display:flex;flex-direction:column;gap:12px" hidden>
-          <h3>Keep this connection permanently</h3>
-          <p class="note" id="perm-note">The config is currently kept in this browser, so clearing site data removes it.
-            Save it into the file itself and it stays, even on a fresh browser.</p>
-          <div id="perm-tools" style="display:flex;flex-direction:column;gap:12px">
-            <div class="row">
-              <button class="btn primary" id="perm-dl">Download file with config saved</button>
-              <button class="btn" id="perm-copy">Copy config line</button>
-            </div>
-            <p class="note">Replace your current file with the downloaded one. Or paste the copied line over
-              <code>var FIREBASE_CONFIG = <span>null</span>;</code> near the top of the script in your file.
-            </p>
-            <textarea id="perm-line" rows="3" readonly spellcheck="false" aria-label="Config line"
-              style="font-family:var(--font-mono);font-size:12.5px"></textarea>
-          </div>
-        </div>
-        <div class="panel" style="display:flex;flex-direction:column;gap:12px">
-          <h3>Backup</h3>
-          <p class="note">Download everything as JSON, or restore from a file you exported earlier.</p>
-          <div class="row">
-            <button class="btn" id="exp">Export JSON</button>
-            <label class="btn" for="imp" style="cursor:pointer">Import JSON</label>
-            <input type="file" id="imp" accept="application/json,.json" hidden>
-            <button class="btn danger" id="clear-sample" hidden>Remove sample data</button>
-          </div>
+          <p class="note">Replace your current file with the downloaded one. Or paste the copied line over <code>var FIREBASE_CONFIG = <span>null</span>;</code> near the top of the script in your file.</p>
+          <textarea id="perm-line" rows="3" readonly spellcheck="false" aria-label="Config line" style="font-family:var(--font-mono);font-size:12.5px"></textarea>
         </div>
       </div>
-    </section>
-  </main>
-
-  <button class="fab" id="fab" aria-label="New application">+</button>
-
-  <!-- Form sheet -->
-  <div class="scrim" id="form-scrim" hidden>
-    <form class="sheet" id="form" role="dialog" aria-modal="true" aria-labelledby="form-title" novalidate>
-      <div class="sheet-h">
-        <h2 id="form-title">New application</h2><button type="button" class="icon-btn" data-close
-          aria-label="Close">×</button>
-      </div>
-      <div class="sheet-b">
-        <fieldset>
-          <legend>The role</legend>
-          <div class="g2">
-            <label class="f">Company <span class="req">*</span><input id="f-company" type="text" autocomplete="off"
-                required></label>
-            <label class="f">Job title <span class="req">*</span><input id="f-role" type="text" autocomplete="off"
-                required></label>
-            <label class="f">Location<input id="f-location" type="text" placeholder="City, state or country"></label>
-            <label class="f">Work mode<select id="f-mode"></select></label>
-            <label class="f">Employment type<select id="f-jobtype"></select></label>
-            <label class="f">Found it on<select id="f-source"></select></label>
-          </div>
-          <label class="f">Job posting link<input id="f-url" type="url" placeholder="https://"></label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Status and dates</legend>
-          <div class="g2">
-            <label class="f">Status<select id="f-status"></select></label>
-            <label class="f">Priority<select id="f-priority"></select></label>
-            <label class="f">Date applied<input id="f-applied" type="date"></label>
-            <label class="f">Follow up on<input id="f-followup" type="date"></label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Pay</legend>
-          <div class="g2" style="grid-template-columns:1fr">
-            <label class="f">Currency<select id="f-cur"></select></label>
-          </div>
-          <div class="g2">
-            <label class="f"><span id="l-smin">Expected minimum</span><input id="f-smin" type="number" step="any"
-                min="0" inputmode="decimal"></label>
-            <label class="f"><span id="l-smax">Expected maximum</span><input id="f-smax" type="number" step="any"
-                min="0" inputmode="decimal"></label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Hiring process</legend>
-          <p class="note">Log each round as it is scheduled. Result and notes can be updated after the round.</p>
-          <div class="steps" id="steps"></div>
-          <div><button type="button" class="btn sm" id="add-step">+ Add round</button></div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Job description</legend>
-          <label class="f">Paste the posting<textarea id="f-jd" rows="7"
-              placeholder="Responsibilities, requirements, tech stack, benefits"></textarea></label>
-        </fieldset>
-
-        <fieldset>
-          <legend>People and notes</legend>
-          <div class="g2">
-            <label class="f">Recruiter or contact<input id="f-contact" type="text"></label>
-            <label class="f">Contact email<input id="f-cemail" type="email"></label>
-            <label class="f">Contact phone<input id="f-cphone" type="tel"></label>
-            <label class="f">Referred by<input id="f-referral" type="text"></label>
-            <label class="f">Resume version used<input id="f-resume" type="text" placeholder="e.g. Frontend v3"></label>
-          </div>
-          <label class="f">Notes<textarea id="f-notes" rows="4"
-              placeholder="Prep notes, questions to ask, impressions"></textarea></label>
-        </fieldset>
-      </div>
-      <div class="sheet-f">
-        <p class="note bad" id="form-err" hidden style="margin-right:auto;align-self:center"></p>
-        <button type="button" class="btn" data-close>Cancel</button>
-        <button type="submit" class="btn primary" id="form-save">Save</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Detail sheet -->
-  <div class="scrim" id="det-scrim" hidden>
-    <div class="sheet" id="det" role="dialog" aria-modal="true" aria-labelledby="det-title">
-      <div class="sheet-h">
-        <h2 id="det-title"></h2><button type="button" class="icon-btn" data-close aria-label="Close">×</button>
-      </div>
-      <div class="sheet-b" id="det-body"></div>
-      <div class="sheet-f">
-        <button type="button" class="btn danger" id="det-del" style="margin-right:auto">Delete</button>
-        <button type="button" class="btn primary" id="det-edit">Edit</button>
+      <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+        <h3>Backup</h3>
+        <p class="note">Download everything as JSON, or restore from a file you exported earlier.</p>
+        <div class="row">
+          <button class="btn" id="exp">Export JSON</button>
+          <label class="btn" for="imp" style="cursor:pointer">Import JSON</label>
+          <input type="file" id="imp" accept="application/json,.json" hidden>
+          <button class="btn danger" id="clear-sample" hidden>Remove sample data</button>
+        </div>
       </div>
     </div>
+  </section>
+</main>
+
+<button class="fab" id="fab" aria-label="New application">+</button>
+
+<!-- Form sheet -->
+<div class="scrim" id="form-scrim" hidden>
+  <form class="sheet" id="form" role="dialog" aria-modal="true" aria-labelledby="form-title" novalidate>
+    <div class="sheet-h"><h2 id="form-title">New application</h2><button type="button" class="icon-btn" data-close aria-label="Close">×</button></div>
+    <div class="sheet-b">
+      <fieldset><legend>The role</legend>
+        <div class="g2">
+          <label class="f">Company <span class="req">*</span><input id="f-company" type="text" autocomplete="off" required></label>
+          <label class="f">Job title <span class="req">*</span><input id="f-role" type="text" autocomplete="off" required></label>
+          <label class="f">Location<input id="f-location" type="text" placeholder="City, state or country"></label>
+          <label class="f">Work mode<select id="f-mode"></select></label>
+          <label class="f">Employment type<select id="f-jobtype"></select></label>
+          <label class="f">Found it on<select id="f-source"></select></label>
+        </div>
+        <label class="f">Job posting link<input id="f-url" type="url" placeholder="https://"></label>
+      </fieldset>
+
+      <fieldset><legend>Status and dates</legend>
+        <div class="g2">
+          <label class="f">Status<select id="f-status"></select></label>
+          <label class="f">Priority<select id="f-priority"></select></label>
+          <label class="f">Date applied<input id="f-applied" type="date"></label>
+          <label class="f">Follow up on<input id="f-followup" type="date"></label>
+        </div>
+      </fieldset>
+
+      <fieldset><legend>Pay</legend>
+        <div class="g2" style="grid-template-columns:1fr">
+          <label class="f">Currency<select id="f-cur"></select></label>
+        </div>
+        <div class="g2">
+          <label class="f"><span id="l-smin">Expected minimum</span><input id="f-smin" type="number" step="any" min="0" inputmode="decimal"></label>
+          <label class="f"><span id="l-smax">Expected maximum</span><input id="f-smax" type="number" step="any" min="0" inputmode="decimal"></label>
+        </div>
+      </fieldset>
+
+      <fieldset><legend>Application portal</legend>
+        <label class="f">Application tracker link<input id="f-tracker" type="url" placeholder="https://  (where you check your application status)"></label>
+        <div class="g2">
+          <label class="f">Login email
+            <span class="cp"><input id="f-acc-email" type="text" autocomplete="off" inputmode="email" spellcheck="false"><button type="button" class="btn sm" data-copy-from="f-acc-email">Copy</button></span>
+          </label>
+          <label class="f">Login password
+            <span class="cp"><input id="f-acc-pass" type="password" autocomplete="new-password" spellcheck="false"><button type="button" class="btn sm" data-toggle-pass="f-acc-pass">Show</button><button type="button" class="btn sm" data-copy-from="f-acc-pass">Copy</button></span>
+          </label>
+        </div>
+        <p class="note">The password is saved as plain text in your database. Use this only with Firebase rules that restrict access, and avoid reusing important passwords.</p>
+      </fieldset>
+
+      <fieldset><legend>Hiring process</legend>
+        <p class="note">Log each round as it is scheduled. Result and notes can be updated after the round.</p>
+        <div class="steps" id="steps"></div>
+        <div><button type="button" class="btn sm" id="add-step">+ Add round</button></div>
+      </fieldset>
+
+      <fieldset><legend>Job description</legend>
+        <label class="f">Paste the posting<textarea id="f-jd" rows="7" placeholder="Responsibilities, requirements, tech stack, benefits"></textarea></label>
+      </fieldset>
+
+      <fieldset><legend>People and notes</legend>
+        <div class="g2">
+          <label class="f">Recruiter or contact<input id="f-contact" type="text"></label>
+          <label class="f">Contact email<input id="f-cemail" type="email"></label>
+          <label class="f">Contact phone<input id="f-cphone" type="tel"></label>
+          <label class="f">Referred by<input id="f-referral" type="text"></label>
+          <label class="f">Resume version used<input id="f-resume" type="text" placeholder="e.g. Frontend v3"></label>
+        </div>
+        <label class="f">Notes<textarea id="f-notes" rows="4" placeholder="Prep notes, questions to ask, impressions"></textarea></label>
+      </fieldset>
+    </div>
+    <div class="sheet-f">
+      <p class="note bad" id="form-err" hidden style="margin-right:auto;align-self:center"></p>
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary" id="form-save">Save</button>
+    </div>
+  </form>
+</div>
+
+<!-- Detail sheet -->
+<div class="scrim" id="det-scrim" hidden>
+  <div class="sheet" id="det" role="dialog" aria-modal="true" aria-labelledby="det-title">
+    <div class="sheet-h"><h2 id="det-title"></h2><button type="button" class="icon-btn" data-close aria-label="Close">×</button></div>
+    <div class="sheet-b" id="det-body"></div>
+    <div class="sheet-f">
+      <button type="button" class="btn danger" id="det-del" style="margin-right:auto">Delete</button>
+      <button type="button" class="btn primary" id="det-edit">Edit</button>
+    </div>
   </div>
+</div>
 
-  <div class="toast" id="toast" hidden role="status"></div>
+<div class="toast" id="toast" hidden role="status"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script>
-    (function () {
-      "use strict";
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+"use strict";
 
-      /* Optionally hard-code your Firebase config here instead of using the Storage tab. */
-      var FIREBASE_CONFIG = null;
+/* Optionally hard-code your Firebase config here instead of using the Storage tab. */
+var FIREBASE_CONFIG = null;
 
-      var COLL = "jobApplications";
-      var LS_DATA = "jobtracker.apps.v1";
-      var LS_CFG = "jobtracker.firebase.v1";
+var COLL = "jobApplications";
+var LS_DATA = "jobtracker.apps.v1";
+var LS_CFG = "jobtracker.firebase.v1";
 
-      var STATUSES = ["Wishlist", "Applied", "Screening", "Interview", "Offer", "Accepted", "Rejected", "Withdrawn", "Ghosted"];
-      var STATUS_COLOR = { Wishlist: "#8c97b8", Applied: "#6ea8fe", Screening: "#4fc3d9", Interview: "#a78bfa", Offer: "#5ed38f", Accepted: "#34b27b", Rejected: "#ef6b73", Withdrawn: "#c3a47a", Ghosted: "#667089" };
-      var ACTIVE = ["Applied", "Screening", "Interview", "Offer"];
-      var STEP_TYPES = ["Recruiter screen", "Online assessment", "Take-home assignment", "Technical round", "System design", "Managerial round", "Culture fit", "HR discussion", "Final round", "Offer discussion", "Other"];
-      var STEP_RESULTS = ["Scheduled", "Pending", "Passed", "Failed", "Cancelled"];
-      var RESULT_COLOR = { Scheduled: "#6ea8fe", Pending: "#f0b25e", Passed: "#5ed38f", Failed: "#ef6b73", Cancelled: "#667089" };
-      var SOURCES = ["LinkedIn", "Naukri", "Indeed", "Company website", "Referral", "Wellfound", "Instahyre", "Telegram", "Recruiter", "Campus", "Other"];
-      var MODES = ["Onsite", "Hybrid", "Remote"];
-      var JOBTYPES = ["Full-time", "Part-time", "Contract", "Internship", "Freelance"];
-      var PRIORITIES = ["High", "Medium", "Low"];
-      var CUR = { INR: "₹", USD: "$", EUR: "€", GBP: "£" };
-      var GROUPS = {
-        all: { label: "All", test: function () { return true } },
-        wishlist: { label: "Wishlist", test: function (a) { return a.status === "Wishlist" } },
-        applied: { label: "Applied", test: function (a) { return a.status === "Applied" } },
-        process: { label: "In process", test: function (a) { return a.status === "Screening" || a.status === "Interview" } },
-        offer: { label: "Offers", test: function (a) { return a.status === "Offer" || a.status === "Accepted" } },
-        closed: { label: "Closed", test: function (a) { return a.status === "Rejected" || a.status === "Withdrawn" || a.status === "Ghosted" } }
-      };
+var STATUSES = ["Wishlist","Applied","Screening","Interview","Offer","Accepted","Rejected","Withdrawn","Ghosted"];
+var STATUS_COLOR = {Wishlist:"#8c97b8",Applied:"#6ea8fe",Screening:"#4fc3d9",Interview:"#a78bfa",Offer:"#5ed38f",Accepted:"#34b27b",Rejected:"#ef6b73",Withdrawn:"#c3a47a",Ghosted:"#667089"};
+var ACTIVE = ["Applied","Screening","Interview","Offer"];
+var STEP_TYPES = ["Recruiter screen","Online assessment","Take-home assignment","Technical round","System design","Managerial round","Culture fit","HR discussion","Final round","Offer discussion","Other"];
+var STEP_RESULTS = ["Scheduled","Pending","Passed","Failed","Cancelled"];
+var RESULT_COLOR = {Scheduled:"#6ea8fe",Pending:"#f0b25e",Passed:"#5ed38f",Failed:"#ef6b73",Cancelled:"#667089"};
+var SOURCES = ["LinkedIn","Naukri","Indeed","Company website","Referral","Wellfound","Instahyre","Telegram","Recruiter","Campus","Other"];
+var MODES = ["Onsite","Hybrid","Remote"];
+var JOBTYPES = ["Full-time","Part-time","Contract","Internship","Freelance"];
+var PRIORITIES = ["High","Medium","Low"];
+var CUR = {INR:"₹",USD:"$",EUR:"€",GBP:"£"};
+var GROUPS = {
+  all:{label:"All",test:function(){return true}},
+  wishlist:{label:"Wishlist",test:function(a){return a.status==="Wishlist"}},
+  applied:{label:"Applied",test:function(a){return a.status==="Applied"}},
+  process:{label:"In process",test:function(a){return a.status==="Screening"||a.status==="Interview"}},
+  offer:{label:"Offers",test:function(a){return a.status==="Offer"||a.status==="Accepted"}},
+  closed:{label:"Closed",test:function(a){return a.status==="Rejected"||a.status==="Withdrawn"||a.status==="Ghosted"}}
+};
 
-      var state = { apps: [], loaded: false, tab: "apps", group: "all", q: "", sort: "applied-desc", editing: null, detailId: null };
+var state = {apps:[], loaded:false, tab:"apps", group:"all", q:"", sort:"applied-desc", editing:null, detailId:null};
 
-      /* ---------- helpers ---------- */
-      function $(s, r) { return (r || document).querySelector(s) }
-      function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)) }
-      function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
-      function uid() { return "a" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) }
-      function pad(n) { return n < 10 ? "0" + n : "" + n }
-      function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) }
-      function parseYmd(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]) }
-      function todayStr() { return ymd(new Date()) }
-      function addDays(s, n) { var d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d) }
-      function daysAgo(s) { var t = parseYmd(todayStr()); return Math.round((t - parseYmd(s)) / 864e5) }
-      function fmtDate(s) {
-        if (!s) return "";
-        var d = parseYmd(s), now = new Date();
-        var o = { day: "numeric", month: "short" }; if (d.getFullYear() !== now.getFullYear()) o.year = "numeric";
-        return d.toLocaleDateString("en-IN", o);
-      }
-      function relDays(s) {
-        var n = daysAgo(s);
-        if (n === 0) return "today"; if (n === 1) return "yesterday"; if (n > 1) return n + "d ago";
-        if (n === -1) return "tomorrow"; return "in " + (-n) + "d";
-      }
-      function money(cur, n) {
-        var s = CUR[cur] || "";
-        if (cur === "INR") {
-          if (n >= 100000) { var l = n / 100000; return s + (Math.round(l * 10) / 10) + " LPA" }
-          return s + Math.round(n).toLocaleString("en-IN");
-        }
-        if (n >= 1000) return s + (Math.round(n / 100) / 10) + "k";
-        return s + Math.round(n);
-      }
-      function payText(a) {
-        var lo = +a.salaryMin || 0, hi = +a.salaryMax || 0;
-        if (!lo && !hi) return "";
-        if (lo && hi && lo !== hi) return money(a.currency, lo) + " to " + money(a.currency, hi);
-        return money(a.currency, hi || lo);
-      }
-      function unitOf(cur) { return cur === "INR" ? 100000 : 1000 }
-      function hue(str) { var h = 0; for (var i = 0; i < str.length; i++)h = (h * 31 + str.charCodeAt(i)) % 360; return h }
-      function opts(list, sel) { return list.map(function (v) { return '<option value="' + esc(v) + '"' + (v === sel ? " selected" : "") + ">" + esc(v) + "</option>" }).join("") }
-      function toast(msg) { var t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true }, 2600) }
+/* ---------- helpers ---------- */
+function $(s,r){return (r||document).querySelector(s)}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function uid(){return "a"+Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function pad(n){return n<10?"0"+n:""+n}
+function ymd(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function parseYmd(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2])}
+function todayStr(){return ymd(new Date())}
+function addDays(s,n){var d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)}
+function daysAgo(s){var t=parseYmd(todayStr());return Math.round((t-parseYmd(s))/864e5)}
+function fmtDate(s){
+  if(!s) return "";
+  var d=parseYmd(s), now=new Date();
+  var o={day:"numeric",month:"short"}; if(d.getFullYear()!==now.getFullYear()) o.year="numeric";
+  return d.toLocaleDateString("en-IN",o);
+}
+function relDays(s){
+  var n=daysAgo(s);
+  if(n===0) return "today"; if(n===1) return "yesterday"; if(n>1) return n+"d ago";
+  if(n===-1) return "tomorrow"; return "in "+(-n)+"d";
+}
+function money(cur,n){
+  var s=CUR[cur]||"";
+  if(cur==="INR"){
+    if(n>=100000){var l=n/100000;return s+(Math.round(l*10)/10)+" LPA"}
+    return s+Math.round(n).toLocaleString("en-IN");
+  }
+  if(n>=1000) return s+(Math.round(n/100)/10)+"k";
+  return s+Math.round(n);
+}
+function payText(a){
+  var lo=+a.salaryMin||0, hi=+a.salaryMax||0;
+  if(!lo&&!hi) return "";
+  if(lo&&hi&&lo!==hi) return money(a.currency,lo)+" to "+money(a.currency,hi);
+  return money(a.currency,hi||lo);
+}
+function unitOf(cur){return cur==="INR"?100000:1000}
+function hue(str){var h=0;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))%360;return h}
+function opts(list,sel){return list.map(function(v){return '<option value="'+esc(v)+'"'+(v===sel?" selected":"")+">"+esc(v)+"</option>"}).join("")}
+function toast(msg){var t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2600)}
 
-      function blank(o) {
-        var a = {
-          id: uid(), company: "", role: "", location: "", workMode: "Hybrid", jobType: "Full-time", source: "LinkedIn", url: "",
-          status: "Applied", priority: "Medium", appliedDate: todayStr(), followUp: "", currency: "INR", salaryMin: 0, salaryMax: 0,
-          jd: "", notes: "", contact: "", contactEmail: "", contactPhone: "", referral: "", resume: "", steps: [],
-          createdAt: Date.now(), updatedAt: Date.now()
-        };
-        for (var k in (o || {})) a[k] = o[k];
-        return a;
-      }
-      function nextStep(a) {
-        var t = todayStr();
-        var c = (a.steps || []).filter(function (s) { return (s.result === "Scheduled" || s.result === "Pending") && s.date && s.date >= t });
-        c.sort(function (x, y) { return x.date < y.date ? -1 : 1 });
-        return c[0] || null;
-      }
+function blank(o){
+  var a={id:uid(),company:"",role:"",location:"",workMode:"Hybrid",jobType:"Full-time",source:"LinkedIn",url:"",
+    status:"Applied",priority:"Medium",appliedDate:todayStr(),followUp:"",currency:"INR",salaryMin:0,salaryMax:0,
+    jd:"",notes:"",contact:"",contactEmail:"",contactPhone:"",referral:"",resume:"",trackerUrl:"",accountEmail:"",accountPassword:"",steps:[],
+    createdAt:Date.now(),updatedAt:Date.now()};
+  for(var k in (o||{})) a[k]=o[k];
+  return a;
+}
+function nextStep(a){
+  var t=todayStr();
+  var c=(a.steps||[]).filter(function(s){return (s.result==="Scheduled"||s.result==="Pending")&&s.date&&s.date>=t});
+  c.sort(function(x,y){return x.date<y.date?-1:1});
+  return c[0]||null;
+}
 
-      /* ---------- storage (Firestore with local fallback) ---------- */
-      function parseConfig(text) {
-        var cfg = {}, re = /["']?(\w+)["']?\s*:\s*["']([^"']*)["']/g, m;
-        while ((m = re.exec(text))) cfg[m[1]] = m[2];
-        return cfg;
-      }
-      function getConfig() {
-        if (FIREBASE_CONFIG) return FIREBASE_CONFIG;
-        try { var raw = localStorage.getItem(LS_CFG); if (raw) { var c = JSON.parse(raw); if (c && c.projectId && c.apiKey) return c } } catch (e) { }
-        return null;
-      }
-      var Store = {
-        mode: "local", db: null, error: "",
-        localLoad: function () { try { return JSON.parse(localStorage.getItem(LS_DATA) || "[]") } catch (e) { return [] } },
-        localSave: function () { try { localStorage.setItem(LS_DATA, JSON.stringify(state.apps)) } catch (e) { toast("Could not save to this browser") } },
-        start: function () {
-          var cfg = getConfig();
-          if (cfg && window.firebase) {
-            try {
-              if (!firebase.apps.length) firebase.initializeApp(cfg);
-              this.db = firebase.firestore();
-              this.mode = "firebase";
-              var self = this;
-              this.db.collection(COLL).onSnapshot(function (snap) {
-                state.apps = snap.docs.map(function (d) { var x = d.data(); x.id = d.id; return x });
-                state.loaded = true; self.error = ""; refresh();
-              }, function (err) {
-                self.error = err.message || String(err); state.loaded = true; refresh();
-              });
-              return;
-            } catch (e) { this.error = e.message }
-          } else if (cfg) { this.error = "The Firebase library did not load. Check your internet connection and reload." }
-          this.mode = "local"; state.apps = this.localLoad(); state.loaded = true;
-        },
-        save: function (app) {
-          app.updatedAt = Date.now();
-          if (this.mode === "firebase") {
-            return this.db.collection(COLL).doc(app.id).set(app).catch(function (e) { toast("Save failed: " + (e.message || e)); throw e });
-          }
-          var i = state.apps.findIndex(function (x) { return x.id === app.id });
-          if (i >= 0) state.apps[i] = app; else state.apps.push(app);
-          this.localSave(); refresh(); return Promise.resolve();
-        },
-        remove: function (id) {
-          if (this.mode === "firebase") {
-            return this.db.collection(COLL).doc(id).delete().catch(function (e) { toast("Delete failed: " + (e.message || e)) });
-          }
-          state.apps = state.apps.filter(function (x) { return x.id !== id });
-          this.localSave(); refresh(); return Promise.resolve();
-        }
-      };
-
-      /* ---------- sample data ---------- */
-      function sampleApps() {
-        var d = function (n) { return addDays(todayStr(), -n) };
-        var f = function (n) { return addDays(todayStr(), n) };
-        var S = function (type, date, result, notes) { return { type: type, date: date, result: result, notes: notes || "" } };
-        var rows = [
-          { company: "Brightpath Systems", role: "Frontend Developer", location: "Bengaluru", workMode: "Hybrid", source: "LinkedIn", status: "Interview", priority: "High", appliedDate: d(24), currency: "INR", salaryMin: 18, salaryMax: 24, steps: [S("Recruiter screen", d(18), "Passed", "Friendly call, 20 min"), S("Technical round", d(9), "Passed", "React and JS fundamentals"), S("System design", f(2), "Scheduled", "Frontend architecture round")], jd: "Build and own customer-facing React apps. 2+ years React, TypeScript, testing, performance work." },
-          { company: "Kiteflow", role: "Full Stack Engineer", location: "Remote (India)", workMode: "Remote", source: "Wellfound", status: "Screening", priority: "High", appliedDate: d(11), currency: "INR", salaryMin: 20, salaryMax: 28, steps: [S("Recruiter screen", f(1), "Scheduled", "Call with talent partner")], followUp: f(1) },
-          { company: "Orbit Payments", role: "Software Engineer II", location: "Pune", workMode: "Onsite", source: "Naukri", status: "Rejected", priority: "Medium", appliedDate: d(40), currency: "INR", salaryMin: 16, salaryMax: 20, steps: [S("Online assessment", d(33), "Passed", "Two coding problems"), S("Technical round", d(26), "Failed", "Struggled with concurrency question")] },
-          { company: "Lumen Health", role: "React Developer", location: "Hyderabad", workMode: "Hybrid", source: "Referral", status: "Offer", priority: "High", appliedDate: d(35), referral: "Ananya S.", currency: "INR", salaryMin: 22, salaryMax: 26, steps: [S("Recruiter screen", d(30), "Passed"), S("Technical round", d(22), "Passed"), S("Managerial round", d(15), "Passed"), S("Offer discussion", d(3), "Pending", "Waiting on written offer")], followUp: f(2) },
-          { company: "Tessellate AI", role: "Frontend Engineer", location: "Remote", workMode: "Remote", source: "LinkedIn", status: "Applied", priority: "Medium", appliedDate: d(17), currency: "USD", salaryMin: 70, salaryMax: 90 },
-          { company: "Granite Logistics", role: "Web Developer", location: "Indore", workMode: "Onsite", source: "Company website", status: "Applied", priority: "Low", appliedDate: d(6), currency: "INR", salaryMin: 8, salaryMax: 12 },
-          { company: "Paperboat Games", role: "UI Engineer", location: "Mumbai", workMode: "Hybrid", source: "Instahyre", status: "Ghosted", priority: "Low", appliedDate: d(52), currency: "INR", salaryMin: 14, salaryMax: 18, steps: [S("Recruiter screen", d(46), "Passed", "Said they would revert in a week")] },
-          { company: "Vantage Cloud", role: "Senior Frontend Engineer", location: "Gurugram", workMode: "Hybrid", source: "Recruiter", status: "Wishlist", priority: "Medium", appliedDate: "", currency: "INR", salaryMin: 30, salaryMax: 38 },
-          { company: "Harbor Analytics", role: "Full Stack Developer", location: "Remote", workMode: "Remote", source: "Indeed", status: "Withdrawn", priority: "Low", appliedDate: d(28), currency: "INR", salaryMin: 12, salaryMax: 15, steps: [S("Recruiter screen", d(21), "Passed")], notes: "Withdrew after the pay band came in lower than expected." },
-          { company: "Mintleaf", role: "Frontend Developer", location: "Bengaluru", workMode: "Onsite", source: "LinkedIn", status: "Applied", priority: "Medium", appliedDate: d(3), currency: "INR", salaryMin: 15, salaryMax: 19, followUp: f(7) },
-          { company: "Northwind Labs", role: "JavaScript Engineer", location: "Remote", workMode: "Remote", source: "Wellfound", status: "Rejected", priority: "Medium", appliedDate: d(14), currency: "USD", salaryMin: 60, salaryMax: 80 },
-          { company: "Cobalt Retail", role: "Frontend Developer", location: "Chennai", workMode: "Hybrid", source: "Naukri", status: "Interview", priority: "Medium", appliedDate: d(20), currency: "INR", salaryMin: 14, salaryMax: 18, steps: [S("Online assessment", d(15), "Passed"), S("Technical round", f(4), "Scheduled", "Live coding on shared editor")] }
-        ];
-        return rows.map(function (r, i) {
-          var a = blank(r);
-          a.salaryMin = (r.salaryMin || 0) * unitOf(a.currency); a.salaryMax = (r.salaryMax || 0) * unitOf(a.currency);
-          a.sample = true; a.createdAt = Date.now() - i * 1000; a.notes = r.notes || "Sample entry. Remove it from the Storage tab.";
-          return a;
+/* ---------- storage (Firestore with local fallback) ---------- */
+function parseConfig(text){
+  var cfg={},re=/["']?(\w+)["']?\s*:\s*["']([^"']*)["']/g,m;
+  while((m=re.exec(text))) cfg[m[1]]=m[2];
+  return cfg;
+}
+function getConfig(){
+  if(FIREBASE_CONFIG) return FIREBASE_CONFIG;
+  try{var raw=localStorage.getItem(LS_CFG);if(raw){var c=JSON.parse(raw);if(c&&c.projectId&&c.apiKey) return c}}catch(e){}
+  return null;
+}
+var Store={
+  mode:"local",db:null,error:"",
+  localLoad:function(){try{return JSON.parse(localStorage.getItem(LS_DATA)||"[]")}catch(e){return []}},
+  localSave:function(){try{localStorage.setItem(LS_DATA,JSON.stringify(state.apps))}catch(e){toast("Could not save to this browser")}},
+  start:function(){
+    var cfg=getConfig();
+    if(cfg&&window.firebase){
+      try{
+        if(!firebase.apps.length) firebase.initializeApp(cfg);
+        this.db=firebase.firestore();
+        this.mode="firebase";
+        var self=this;
+        this.db.collection(COLL).onSnapshot(function(snap){
+          state.apps=snap.docs.map(function(d){var x=d.data();x.id=d.id;return x});
+          state.loaded=true;self.error="";refresh();
+        },function(err){
+          self.error=err.message||String(err);state.loaded=true;refresh();
         });
-      }
+        return;
+      }catch(e){this.error=e.message}
+    }else if(cfg){this.error="The Firebase library did not load. Check your internet connection and reload."}
+    this.mode="local";state.apps=this.localLoad();state.loaded=true;
+  },
+  save:function(app){
+    app.updatedAt=Date.now();
+    if(this.mode==="firebase"){
+      return this.db.collection(COLL).doc(app.id).set(app).catch(function(e){toast("Save failed: "+(e.message||e));throw e});
+    }
+    var i=state.apps.findIndex(function(x){return x.id===app.id});
+    if(i>=0) state.apps[i]=app; else state.apps.push(app);
+    this.localSave();refresh();return Promise.resolve();
+  },
+  remove:function(id){
+    if(this.mode==="firebase"){
+      return this.db.collection(COLL).doc(id).delete().catch(function(e){toast("Delete failed: "+(e.message||e))});
+    }
+    state.apps=state.apps.filter(function(x){return x.id!==id});
+    this.localSave();refresh();return Promise.resolve();
+  }
+};
 
-      /* ---------- list view ---------- */
-      function visible() {
-        var q = state.q.trim().toLowerCase();
-        var g = GROUPS[state.group].test;
-        var out = state.apps.filter(function (a) {
-          if (!g(a)) return false;
-          if (!q) return true;
-          return [a.company, a.role, a.location, a.source, a.notes, a.contact, a.referral, a.jd].join(" ").toLowerCase().indexOf(q) >= 0;
-        });
-        var pr = { High: 0, Medium: 1, Low: 2 };
-        var s = state.sort;
-        out.sort(function (x, y) {
-          if (s === "company") return x.company.localeCompare(y.company);
-          if (s === "priority") return (pr[x.priority] - pr[y.priority]) || x.company.localeCompare(y.company);
-          if (s === "followup") { var a = x.followUp || "9999", b = y.followUp || "9999"; return a < b ? -1 : a > b ? 1 : 0 }
-          if (s === "updated") return (y.updatedAt || 0) - (x.updatedAt || 0);
-          var ax = x.appliedDate || "", ay = y.appliedDate || "";
-          if (s === "applied-asc") { if (!ax) return 1; if (!ay) return -1; return ax < ay ? -1 : ax > ay ? 1 : 0 }
-          if (!ax && ay) return -1; if (ax && !ay) return 1; return ax < ay ? 1 : ax > ay ? -1 : 0;
-        });
-        return out;
-      }
-      function attention() {
-        var t = todayStr(), lim = addDays(t, 2), out = [];
-        state.apps.forEach(function (a) {
-          if (ACTIVE.indexOf(a.status) < 0) return;
-          if (a.followUp && a.followUp <= lim) {
-            var n = daysAgo(a.followUp);
-            out.push({ a: a, sort: a.followUp, late: a.followUp < t, text: a.followUp < t ? "Follow-up overdue by " + n + (n === 1 ? " day" : " days") : a.followUp === t ? "Follow-up due today" : "Follow-up " + relDays(a.followUp) });
-          } else if (a.status === "Applied" && !(a.steps || []).length && a.appliedDate && daysAgo(a.appliedDate) >= 14) {
-            out.push({ a: a, sort: a.appliedDate, late: false, text: "No reply in " + daysAgo(a.appliedDate) + " days" });
-          }
-        });
-        out.sort(function (x, y) { return x.sort < y.sort ? -1 : 1 });
-        return out;
-      }
-      function cardHtml(a) {
-        var pay = payText(a), ns = nextStep(a), t = todayStr();
-        var meta = [a.location, a.workMode, a.jobType, pay].filter(Boolean).map(function (m) { return "<span>" + esc(m) + "</span>" }).join("");
-        var left;
-        if (ns) left = '<span class="next"><em>Next</em> ' + esc(ns.type) + " · " + esc(fmtDate(ns.date)) + "</span>";
-        else if (a.appliedDate) left = '<span class="next">Applied ' + esc(relDays(a.appliedDate)) + "</span>";
-        else left = '<span class="next">Not applied yet</span>';
-        var right = "";
-        if (a.followUp && ACTIVE.indexOf(a.status) >= 0) {
-          var late = a.followUp < t;
-          right = '<span class="flag' + (late ? " late" : "") + '">' + (late ? "Overdue" : "Follow up " + esc(fmtDate(a.followUp))) + "</span>";
-        } else right = '<span><i class="prio ' + esc(a.priority) + '"></i>' + esc(a.priority) + "</span>";
-        return '<article class="card" tabindex="0" role="button" data-id="' + esc(a.id) + '" aria-label="' + esc(a.company + ", " + a.role) + '">' +
-          '<div class="ch"><div class="av" style="--h:' + hue(a.company || "x") + '">' + esc((a.company || "?").charAt(0).toUpperCase()) + '</div>' +
-          '<div class="ct"><h3>' + esc(a.company) + '</h3><p>' + esc(a.role) + '</p></div>' +
-          '<span class="pill" style="--c:' + STATUS_COLOR[a.status] + '">' + esc(a.status) + '</span></div>' +
-          (meta ? '<div class="meta">' + meta + "</div>" : "") +
-          '<div class="cf">' + left + right + "</div></article>";
-      }
-      function renderApps() {
-        var list = $("#list"), chips = $("#chips");
-        chips.innerHTML = Object.keys(GROUPS).map(function (k) {
-          var n = state.apps.filter(GROUPS[k].test).length;
-          return '<button class="chip" data-g="' + k + '" aria-pressed="' + (state.group === k) + '">' + GROUPS[k].label + " <b>" + n + "</b></button>";
-        }).join("");
-        var act = state.apps.filter(function (a) { return ACTIVE.indexOf(a.status) >= 0 }).length;
-        var att = attention().length;
-        $("#summary").innerHTML = state.apps.length ? "<span>" + state.apps.length + " application" + (state.apps.length === 1 ? "" : "s") + "</span><span>" + act + " active</span>" + (att ? '<span class="warn">' + att + " need attention</span>" : "") : "";
-        $("#sub").textContent = state.apps.length ? act + " active of " + state.apps.length + " tracked" : "Your search, in one place";
-        if (!state.loaded) { list.innerHTML = '<div class="empty"><h3>Syncing with Firebase</h3><p>Loading your applications.</p></div>'; return }
-        if (!state.apps.length) {
-          list.innerHTML = '<div class="empty"><h3>No applications yet</h3><p>Log your first application with its job description and interview rounds. Analytics fill in as you add more.</p><div class="row"><button class="btn primary" data-act="new">Add application</button><button class="btn" data-act="sample">Load sample data</button></div></div>';
-          return;
-        }
-        var v = visible();
-        if (!v.length) { list.innerHTML = '<div class="empty"><h3>Nothing matches</h3><p>Try a different search or filter.</p></div>'; return }
-        list.innerHTML = v.map(cardHtml).join("");
-      }
+/* ---------- sample data ---------- */
+function sampleApps(){
+  var d=function(n){return addDays(todayStr(),-n)};
+  var f=function(n){return addDays(todayStr(),n)};
+  var S=function(type,date,result,notes){return {type:type,date:date,result:result,notes:notes||""}};
+  var rows=[
+    {company:"Brightpath Systems",role:"Frontend Developer",location:"Bengaluru",workMode:"Hybrid",source:"LinkedIn",status:"Interview",priority:"High",appliedDate:d(24),currency:"INR",salaryMin:18,salaryMax:24,steps:[S("Recruiter screen",d(18),"Passed","Friendly call, 20 min"),S("Technical round",d(9),"Passed","React and JS fundamentals"),S("System design",f(2),"Scheduled","Frontend architecture round")],jd:"Build and own customer-facing React apps. 2+ years React, TypeScript, testing, performance work."},
+    {company:"Kiteflow",role:"Full Stack Engineer",location:"Remote (India)",workMode:"Remote",source:"Wellfound",status:"Screening",priority:"High",appliedDate:d(11),currency:"INR",salaryMin:20,salaryMax:28,steps:[S("Recruiter screen",f(1),"Scheduled","Call with talent partner")],followUp:f(1)},
+    {company:"Orbit Payments",role:"Software Engineer II",location:"Pune",workMode:"Onsite",source:"Naukri",status:"Rejected",priority:"Medium",appliedDate:d(40),currency:"INR",salaryMin:16,salaryMax:20,steps:[S("Online assessment",d(33),"Passed","Two coding problems"),S("Technical round",d(26),"Failed","Struggled with concurrency question")]},
+    {company:"Lumen Health",role:"React Developer",location:"Hyderabad",workMode:"Hybrid",source:"Referral",status:"Offer",priority:"High",appliedDate:d(35),referral:"Ananya S.",currency:"INR",salaryMin:22,salaryMax:26,steps:[S("Recruiter screen",d(30),"Passed"),S("Technical round",d(22),"Passed"),S("Managerial round",d(15),"Passed"),S("Offer discussion",d(3),"Pending","Waiting on written offer")],followUp:f(2)},
+    {company:"Tessellate AI",role:"Frontend Engineer",location:"Remote",workMode:"Remote",source:"LinkedIn",status:"Applied",priority:"Medium",appliedDate:d(17),currency:"USD",salaryMin:70,salaryMax:90},
+    {company:"Granite Logistics",role:"Web Developer",location:"Indore",workMode:"Onsite",source:"Company website",status:"Applied",priority:"Low",appliedDate:d(6),currency:"INR",salaryMin:8,salaryMax:12},
+    {company:"Paperboat Games",role:"UI Engineer",location:"Mumbai",workMode:"Hybrid",source:"Instahyre",status:"Ghosted",priority:"Low",appliedDate:d(52),currency:"INR",salaryMin:14,salaryMax:18,steps:[S("Recruiter screen",d(46),"Passed","Said they would revert in a week")]},
+    {company:"Vantage Cloud",role:"Senior Frontend Engineer",location:"Gurugram",workMode:"Hybrid",source:"Recruiter",status:"Wishlist",priority:"Medium",appliedDate:"",currency:"INR",salaryMin:30,salaryMax:38},
+    {company:"Harbor Analytics",role:"Full Stack Developer",location:"Remote",workMode:"Remote",source:"Indeed",status:"Withdrawn",priority:"Low",appliedDate:d(28),currency:"INR",salaryMin:12,salaryMax:15,steps:[S("Recruiter screen",d(21),"Passed")],notes:"Withdrew after the pay band came in lower than expected."},
+    {company:"Mintleaf",role:"Frontend Developer",location:"Bengaluru",workMode:"Onsite",source:"LinkedIn",status:"Applied",priority:"Medium",appliedDate:d(3),currency:"INR",salaryMin:15,salaryMax:19,followUp:f(7)},
+    {company:"Northwind Labs",role:"JavaScript Engineer",location:"Remote",workMode:"Remote",source:"Wellfound",status:"Rejected",priority:"Medium",appliedDate:d(14),currency:"USD",salaryMin:60,salaryMax:80},
+    {company:"Cobalt Retail",role:"Frontend Developer",location:"Chennai",workMode:"Hybrid",source:"Naukri",status:"Interview",priority:"Medium",appliedDate:d(20),currency:"INR",salaryMin:14,salaryMax:18,steps:[S("Online assessment",d(15),"Passed"),S("Technical round",f(4),"Scheduled","Live coding on shared editor")]}
+  ];
+  return rows.map(function(r,i){
+    var a=blank(r);
+    a.salaryMin=(r.salaryMin||0)*unitOf(a.currency);a.salaryMax=(r.salaryMax||0)*unitOf(a.currency);
+    a.sample=true;a.createdAt=Date.now()-i*1000;a.notes=r.notes||"Sample entry. Remove it from the Storage tab.";
+    return a;
+  });
+}
 
-      /* ---------- detail ---------- */
-      function openDetail(id) {
-        var a = state.apps.find(function (x) { return x.id === id });
-        if (!a) return;
-        state.detailId = id;
-        $("#det-title").textContent = a.company + " · " + a.role;
-        var facts = [
-          ["Applied", a.appliedDate ? fmtDate(a.appliedDate) + " (" + relDays(a.appliedDate) + ")" : "Not yet"],
-          ["Follow up", a.followUp ? fmtDate(a.followUp) : ""],
-          ["Location", a.location], ["Work mode", a.workMode], ["Type", a.jobType], ["Source", a.source],
-          ["Expected pay", payText(a)], ["Priority", a.priority], ["Resume", a.resume],
-          ["Contact", [a.contact].filter(Boolean).join("")], ["Email", a.contactEmail], ["Phone", a.contactPhone], ["Referred by", a.referral]
-        ].filter(function (f) { return f[1] });
-        var factsHtml = facts.map(function (f) {
-          var v = esc(f[1]);
-          if (f[0] === "Email") v = '<a href="mailto:' + v + '">' + v + "</a>";
-          if (f[0] === "Phone") v = '<a href="tel:' + v + '">' + v + "</a>";
-          return '<div class="fact"><dt>' + f[0] + "</dt><dd>" + v + "</dd></div>";
-        }).join("");
-        var link = "";
-        if (a.url && /^https?:\/\//i.test(a.url)) link = '<div class="fact"><dt>Posting</dt><dd><a href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">Open job link</a></dd></div>';
-        var steps = (a.steps || []).slice().sort(function (x, y) { return (x.date || "9999") < (y.date || "9999") ? -1 : 1 });
-        var stepsHtml = steps.length ? '<ul class="tl">' + steps.map(function (s) {
-          return '<li style="--c:' + RESULT_COLOR[s.result] + '"><div class="t"><b>' + esc(s.type) + '</b><span class="pill" style="--c:' + RESULT_COLOR[s.result] + '">' + esc(s.result) + '</span><span class="d">' + esc(s.date ? fmtDate(s.date) : "No date") + "</span></div>" + (s.notes ? "<p>" + esc(s.notes) + "</p>" : "") + "</li>";
-        }).join("") + "</ul>" : '<p class="note">No rounds logged yet. Use Edit to add the first one.</p>';
-        $("#det-body").innerHTML =
-          '<div class="qs"><span class="pill" style="--c:' + STATUS_COLOR[a.status] + '">' + esc(a.status) + '</span><label class="f" style="flex-direction:row;align-items:center;gap:8px">Move to <select id="det-status" aria-label="Change status">' + opts(STATUSES, a.status) + "</select></label></div>" +
-          '<dl class="facts" style="margin:0">' + factsHtml + link + "</dl>" +
-          '<div class="sec"><h4>Hiring process</h4>' + stepsHtml + "</div>" +
-          (a.jd ? '<div class="sec"><h4>Job description</h4><div class="prose">' + esc(a.jd) + "</div></div>" : "") +
-          (a.notes ? '<div class="sec"><h4>Notes</h4><div class="prose">' + esc(a.notes) + "</div></div>" : "");
-        var del = $("#det-del"); del.textContent = "Delete"; del.classList.remove("armed");
-        show("#det-scrim");
-      }
-      function show(sel) { $(sel).hidden = false; document.body.classList.add("lock") }
-      function hide(sel) { $(sel).hidden = true; if ($("#form-scrim").hidden && $("#det-scrim").hidden) document.body.classList.remove("lock") }
+/* ---------- list view ---------- */
+function visible(){
+  var q=state.q.trim().toLowerCase();
+  var g=GROUPS[state.group].test;
+  var out=state.apps.filter(function(a){
+    if(!g(a)) return false;
+    if(!q) return true;
+    return [a.company,a.role,a.location,a.source,a.notes,a.contact,a.referral,a.jd].join(" ").toLowerCase().indexOf(q)>=0;
+  });
+  var pr={High:0,Medium:1,Low:2};
+  var s=state.sort;
+  out.sort(function(x,y){
+    if(s==="company") return x.company.localeCompare(y.company);
+    if(s==="priority") return (pr[x.priority]-pr[y.priority])||x.company.localeCompare(y.company);
+    if(s==="followup"){var a=x.followUp||"9999",b=y.followUp||"9999";return a<b?-1:a>b?1:0}
+    if(s==="updated") return (y.updatedAt||0)-(x.updatedAt||0);
+    var ax=x.appliedDate||"",ay=y.appliedDate||"";
+    if(s==="applied-asc"){ if(!ax) return 1; if(!ay) return -1; return ax<ay?-1:ax>ay?1:0 }
+    if(!ax&&ay) return -1; if(ax&&!ay) return 1; return ax<ay?1:ax>ay?-1:0;
+  });
+  return out;
+}
+function attention(){
+  var t=todayStr(),lim=addDays(t,2),out=[];
+  state.apps.forEach(function(a){
+    if(ACTIVE.indexOf(a.status)<0) return;
+    if(a.followUp&&a.followUp<=lim){
+      var n=daysAgo(a.followUp);
+      out.push({a:a,sort:a.followUp,late:a.followUp<t,text:a.followUp<t?"Follow-up overdue by "+n+(n===1?" day":" days"):a.followUp===t?"Follow-up due today":"Follow-up "+relDays(a.followUp)});
+    }else if(a.status==="Applied"&&!(a.steps||[]).length&&a.appliedDate&&daysAgo(a.appliedDate)>=14){
+      out.push({a:a,sort:a.appliedDate,late:false,text:"No reply in "+daysAgo(a.appliedDate)+" days"});
+    }
+  });
+  out.sort(function(x,y){return x.sort<y.sort?-1:1});
+  return out;
+}
+function cardHtml(a){
+  var pay=payText(a),ns=nextStep(a),t=todayStr();
+  var meta=[a.location,a.workMode,a.jobType,pay].filter(Boolean).map(function(m){return "<span>"+esc(m)+"</span>"}).join("");
+  var left;
+  if(ns) left='<span class="next"><em>Next</em> '+esc(ns.type)+" · "+esc(fmtDate(ns.date))+"</span>";
+  else if(a.appliedDate) left='<span class="next">Applied '+esc(relDays(a.appliedDate))+"</span>";
+  else left='<span class="next">Not applied yet</span>';
+  var right="";
+  if(a.followUp&&ACTIVE.indexOf(a.status)>=0){
+    var late=a.followUp<t;
+    right='<span class="flag'+(late?" late":"")+'">'+(late?"Overdue":"Follow up "+esc(fmtDate(a.followUp)))+"</span>";
+  }else right='<span><i class="prio '+esc(a.priority)+'"></i>'+esc(a.priority)+"</span>";
+  return '<article class="card" tabindex="0" role="button" data-id="'+esc(a.id)+'" aria-label="'+esc(a.company+", "+a.role)+'">'+
+    '<div class="ch"><div class="av" style="--h:'+hue(a.company||"x")+'">'+esc((a.company||"?").charAt(0).toUpperCase())+'</div>'+
+    '<div class="ct"><h3>'+esc(a.company)+'</h3><p>'+esc(a.role)+'</p></div>'+
+    '<span class="pill" style="--c:'+STATUS_COLOR[a.status]+'">'+esc(a.status)+'</span></div>'+
+    (meta?'<div class="meta">'+meta+"</div>":"")+
+    '<div class="cf">'+left+right+"</div></article>";
+}
+function renderApps(){
+  var list=$("#list"),chips=$("#chips");
+  chips.innerHTML=Object.keys(GROUPS).map(function(k){
+    var n=state.apps.filter(GROUPS[k].test).length;
+    return '<button class="chip" data-g="'+k+'" aria-pressed="'+(state.group===k)+'">'+GROUPS[k].label+" <b>"+n+"</b></button>";
+  }).join("");
+  var act=state.apps.filter(function(a){return ACTIVE.indexOf(a.status)>=0}).length;
+  var att=attention().length;
+  $("#summary").innerHTML=state.apps.length?"<span>"+state.apps.length+" application"+(state.apps.length===1?"":"s")+"</span><span>"+act+" active</span>"+(att?'<span class="warn">'+att+" need attention</span>":""):"";
+  $("#sub").textContent=state.apps.length?act+" active of "+state.apps.length+" tracked":"Your search, in one place";
+  if(!state.loaded){list.innerHTML='<div class="empty"><h3>Syncing with Firebase</h3><p>Loading your applications.</p></div>';return}
+  if(!state.apps.length){
+    list.innerHTML='<div class="empty"><h3>No applications yet</h3><p>Log your first application with its job description and interview rounds. Analytics fill in as you add more.</p><div class="row"><button class="btn primary" data-act="new">Add application</button><button class="btn" data-act="sample">Load sample data</button></div></div>';
+    return;
+  }
+  var v=visible();
+  if(!v.length){list.innerHTML='<div class="empty"><h3>Nothing matches</h3><p>Try a different search or filter.</p></div>';return}
+  list.innerHTML=v.map(cardHtml).join("");
+}
 
-      /* ---------- form ---------- */
-      function fillSelects() {
-        $("#f-mode").innerHTML = opts(MODES); $("#f-jobtype").innerHTML = opts(JOBTYPES);
-        $("#f-source").innerHTML = opts(SOURCES); $("#f-status").innerHTML = opts(STATUSES);
-        $("#f-priority").innerHTML = opts(PRIORITIES); $("#f-cur").innerHTML = opts(Object.keys(CUR));
-      }
-      function payLabels() {
-        var c = $("#f-cur").value, inr = c === "INR";
-        $("#l-smin").textContent = "Expected minimum (" + (inr ? "LPA" : "thousands per year") + ")";
-        $("#l-smax").textContent = "Expected maximum (" + (inr ? "LPA" : "thousands per year") + ")";
-      }
-      function addStepRow(s) {
-        s = s || {};
-        var d = document.createElement("div"); d.className = "step-row";
-        d.innerHTML = '<select class="s-type" aria-label="Round type">' + opts(STEP_TYPES, s.type || "Recruiter screen") + '</select>' +
-          '<input class="s-date" type="date" aria-label="Round date" value="' + esc(s.date || "") + '">' +
-          '<select class="s-result" aria-label="Round result">' + opts(STEP_RESULTS, s.result || "Scheduled") + '</select>' +
-          '<input class="s-notes" type="text" aria-label="Round notes" placeholder="Interviewer, topics, feedback" value="' + esc(s.notes || "") + '">' +
-          '<button type="button" class="icon-btn s-del" aria-label="Remove round">×</button>';
-        $("#steps").appendChild(d);
-      }
-      function openForm(a) {
-        var isNew = !a;
-        state.editing = isNew ? null : a.id;
-        a = a || blank();
-        $("#form-title").textContent = isNew ? "New application" : "Edit application";
-        var set = function (id, v) { $("#" + id).value = v == null ? "" : v };
-        set("f-company", a.company); set("f-role", a.role); set("f-location", a.location); set("f-mode", a.workMode);
-        set("f-jobtype", a.jobType); set("f-source", a.source); set("f-url", a.url); set("f-status", a.status);
-        set("f-priority", a.priority); set("f-applied", a.appliedDate); set("f-followup", a.followUp); set("f-cur", a.currency);
-        payLabels();
-        var u = unitOf(a.currency);
-        set("f-smin", a.salaryMin ? Math.round(a.salaryMin / u * 100) / 100 : "");
-        set("f-smax", a.salaryMax ? Math.round(a.salaryMax / u * 100) / 100 : "");
-        set("f-jd", a.jd); set("f-notes", a.notes); set("f-contact", a.contact); set("f-cemail", a.contactEmail);
-        set("f-cphone", a.contactPhone); set("f-referral", a.referral); set("f-resume", a.resume);
-        $("#steps").innerHTML = ""; (a.steps || []).forEach(addStepRow);
-        $("#form-err").hidden = true;
-        hide("#det-scrim");
-        show("#form-scrim");
-        $(".sheet-b", "#form").scrollTop = 0;
-        setTimeout(function () { if (isNew) $("#f-company").focus() }, 50);
-      }
-      function saveForm(e) {
-        e.preventDefault();
-        var g = function (id) { return $("#" + id).value.trim() };
-        var company = g("f-company"), role = g("f-role"), err = $("#form-err");
-        if (!company || !role) { err.textContent = "Company and job title are required."; err.hidden = false; return }
-        var existing = state.editing && state.apps.find(function (x) { return x.id === state.editing });
-        var a = existing ? JSON.parse(JSON.stringify(existing)) : blank();
-        var cur = $("#f-cur").value, u = unitOf(cur);
-        a.company = company; a.role = role; a.location = g("f-location"); a.workMode = $("#f-mode").value; a.jobType = $("#f-jobtype").value;
-        a.source = $("#f-source").value; a.url = g("f-url"); a.status = $("#f-status").value; a.priority = $("#f-priority").value;
-        a.appliedDate = $("#f-applied").value; a.followUp = $("#f-followup").value; a.currency = cur;
-        a.salaryMin = Math.round((parseFloat($("#f-smin").value) || 0) * u); a.salaryMax = Math.round((parseFloat($("#f-smax").value) || 0) * u);
-        a.jd = $("#f-jd").value.trim(); a.notes = $("#f-notes").value.trim(); a.contact = g("f-contact"); a.contactEmail = g("f-cemail");
-        a.contactPhone = g("f-cphone"); a.referral = g("f-referral"); a.resume = g("f-resume");
-        a.steps = $$(".step-row").map(function (r) { return { type: $(".s-type", r).value, date: $(".s-date", r).value, result: $(".s-result", r).value, notes: $(".s-notes", r).value.trim() } });
-        delete a.sample;
-        if (existing && existing.sample) a.sample = true;
-        var btn = $("#form-save"); btn.disabled = true;
-        Store.save(a).then(function () {
-          hide("#form-scrim"); toast(existing ? "Changes saved" : "Application added");
-        }).catch(function () { }).then(function () { btn.disabled = false });
-      }
+/* ---------- detail ---------- */
+function openDetail(id){
+  var a=state.apps.find(function(x){return x.id===id});
+  if(!a) return;
+  state.detailId=id;
+  $("#det-title").textContent=a.company+" · "+a.role;
+  var facts=[
+    ["Applied",a.appliedDate?fmtDate(a.appliedDate)+" ("+relDays(a.appliedDate)+")":"Not yet"],
+    ["Follow up",a.followUp?fmtDate(a.followUp):""],
+    ["Location",a.location],["Work mode",a.workMode],["Type",a.jobType],["Source",a.source],
+    ["Expected pay",payText(a)],["Priority",a.priority],["Resume",a.resume],
+    ["Contact",[a.contact].filter(Boolean).join("")],["Email",a.contactEmail],["Phone",a.contactPhone],["Referred by",a.referral]
+  ].filter(function(f){return f[1]});
+  var factsHtml=facts.map(function(f){
+    var v=esc(f[1]);
+    if(f[0]==="Email") v='<a href="mailto:'+v+'">'+v+"</a>";
+    if(f[0]==="Phone") v='<a href="tel:'+v+'">'+v+"</a>";
+    return '<div class="fact"><dt>'+f[0]+"</dt><dd>"+v+"</dd></div>";
+  }).join("");
+  var link="";
+  if(a.url&&/^https?:\/\//i.test(a.url)) link='<div class="fact"><dt>Posting</dt><dd><a href="'+esc(a.url)+'" target="_blank" rel="noopener noreferrer">Open job link</a></dd></div>';
+  var portal="";
+  var hasTracker=a.trackerUrl&&/^https?:\/\//i.test(a.trackerUrl);
+  if(hasTracker||a.accountEmail||a.accountPassword){
+    portal='<div class="sec"><h4>Application portal</h4><div class="creds">'+
+      (a.trackerUrl?'<div class="cred"><span class="k">Tracker</span>'+(hasTracker?'<a class="v" href="'+esc(a.trackerUrl)+'" target="_blank" rel="noopener noreferrer">Open application tracker</a>':'<span class="v">'+esc(a.trackerUrl)+"</span>")+"</div>":"")+
+      (a.accountEmail?'<div class="cred"><span class="k">Email</span><span class="v mono">'+esc(a.accountEmail)+'</span><button type="button" class="btn sm" data-copy="accountEmail">Copy</button></div>':"")+
+      (a.accountPassword?'<div class="cred"><span class="k">Password</span><span class="v mono" id="det-pass" data-shown="0">••••••••</span><button type="button" class="btn sm" data-reveal="1">Show</button><button type="button" class="btn sm" data-copy="accountPassword">Copy</button></div>':"")+
+      "</div></div>";
+  }
+  var steps=(a.steps||[]).slice().sort(function(x,y){return (x.date||"9999")<(y.date||"9999")?-1:1});
+  var stepsHtml=steps.length?'<ul class="tl">'+steps.map(function(s){
+    return '<li style="--c:'+RESULT_COLOR[s.result]+'"><div class="t"><b>'+esc(s.type)+'</b><span class="pill" style="--c:'+RESULT_COLOR[s.result]+'">'+esc(s.result)+'</span><span class="d">'+esc(s.date?fmtDate(s.date):"No date")+"</span></div>"+(s.notes?"<p>"+esc(s.notes)+"</p>":"")+"</li>";
+  }).join("")+"</ul>":'<p class="note">No rounds logged yet. Use Edit to add the first one.</p>';
+  $("#det-body").innerHTML=
+    '<div class="qs"><span class="pill" style="--c:'+STATUS_COLOR[a.status]+'">'+esc(a.status)+'</span><label class="f" style="flex-direction:row;align-items:center;gap:8px">Move to <select id="det-status" aria-label="Change status">'+opts(STATUSES,a.status)+"</select></label></div>"+
+    '<dl class="facts" style="margin:0">'+factsHtml+link+"</dl>"+portal+
+    '<div class="sec"><h4>Hiring process</h4>'+stepsHtml+"</div>"+
+    (a.jd?'<div class="sec"><h4>Job description</h4><div class="prose">'+esc(a.jd)+"</div></div>":"")+
+    (a.notes?'<div class="sec"><h4>Notes</h4><div class="prose">'+esc(a.notes)+"</div></div>":"");
+  var del=$("#det-del");del.textContent="Delete";del.classList.remove("armed");
+  show("#det-scrim");
+}
+function show(sel){$(sel).hidden=false;document.body.classList.add("lock")}
+function hide(sel){$(sel).hidden=true;if($("#form-scrim").hidden&&$("#det-scrim").hidden) document.body.classList.remove("lock")}
 
-      /* ---------- analytics ---------- */
-      var charts = {};
-      function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() }
-      function reached(a) {
-        var st = a.status, steps = a.steps || [];
-        var light = ["Recruiter screen", "Online assessment"];
-        return {
-          applied: st !== "Wishlist",
-          screening: ["Screening", "Interview", "Offer", "Accepted"].indexOf(st) >= 0 || steps.length > 0,
-          interview: ["Interview", "Offer", "Accepted"].indexOf(st) >= 0 || steps.some(function (s) { return light.indexOf(s.type) < 0 }),
-          offer: st === "Offer" || st === "Accepted"
-        };
-      }
-      function pct(n, d) { return d ? Math.round(n / d * 100) : 0 }
-      function draw(id, cfg, hasData, msg) {
-        var wrap = $("#w-" + id.replace("c-", ""));
-        if (charts[id]) { charts[id].destroy(); delete charts[id] }
-        var none = wrap.querySelector(".cnone"); if (none) none.remove();
-        var cv = wrap.querySelector("canvas");
-        if (!hasData) { cv.style.display = "none"; var n = document.createElement("div"); n.className = "cnone"; n.textContent = msg || "Nothing to chart yet."; wrap.appendChild(n); return }
-        cv.style.display = "";
-        charts[id] = new Chart(cv, cfg);
-      }
-      function renderStats() {
-        if (!window.Chart) { $("#kpis").innerHTML = '<div class="panel" style="grid-column:1/-1">Charts need the Chart.js library, which did not load. Check your connection and reload.</div>'; return }
-        var apps = state.apps, text = cssv("--muted"), line = cssv("--line"), surface = cssv("--surface"), textStrong = cssv("--text");
-        Chart.defaults.color = text; Chart.defaults.borderColor = line;
-        Chart.defaults.font.family = '"DM Sans",system-ui,sans-serif'; Chart.defaults.font.size = 12;
-        var R = apps.map(reached);
-        var applied = R.filter(function (r) { return r.applied }).length;
-        var responded = R.filter(function (r) { return r.screening }).length;
-        var interviewed = R.filter(function (r) { return r.interview }).length;
-        var offers = R.filter(function (r) { return r.offer }).length;
-        var active = apps.filter(function (a) { return ACTIVE.indexOf(a.status) >= 0 }).length;
-        var byCur = {};
-        apps.forEach(function (a) {
-          var lo = +a.salaryMin || 0, hi = +a.salaryMax || 0; if (!lo && !hi) return;
-          var mid = lo && hi ? (lo + hi) / 2 : (lo || hi); (byCur[a.currency] = byCur[a.currency] || []).push(mid);
-        });
-        var curKeys = Object.keys(byCur).sort(function (x, y) { return byCur[y].length - byCur[x].length });
-        var avgPay = "–", avgSub = "No pay logged";
-        if (curKeys.length) { var arr = byCur[curKeys[0]]; avgPay = money(curKeys[0], arr.reduce(function (s, v) { return s + v }, 0) / arr.length); avgSub = "Midpoint, " + arr.length + " role" + (arr.length === 1 ? "" : "s") + " in " + curKeys[0] }
-        var kp = [
-          ["Applications", apps.length, applied + " applied"],
-          ["Active", active, "Still in play"],
-          ["Response rate", pct(responded, applied) + "%", responded + " of " + applied + " replied"],
-          ["Interview rate", pct(interviewed, applied) + "%", interviewed + " got to interviews"],
-          ["Offers", offers, pct(offers, applied) + "% of applied"],
-          ["Avg. expected pay", avgPay, avgSub]
-        ];
-        $("#kpis").innerHTML = kp.map(function (k) { return '<div class="kpi"><div class="l">' + k[0] + '</div><div class="v mono" style="font-family:var(--font-display)">' + esc(k[1]) + '</div><div class="s">' + esc(k[2]) + "</div></div>" }).join("");
+/* ---------- form ---------- */
+function fillSelects(){
+  $("#f-mode").innerHTML=opts(MODES);$("#f-jobtype").innerHTML=opts(JOBTYPES);
+  $("#f-source").innerHTML=opts(SOURCES);$("#f-status").innerHTML=opts(STATUSES);
+  $("#f-priority").innerHTML=opts(PRIORITIES);$("#f-cur").innerHTML=opts(Object.keys(CUR));
+}
+function payLabels(){
+  var c=$("#f-cur").value,inr=c==="INR";
+  $("#l-smin").textContent="Expected minimum ("+(inr?"LPA":"thousands per year")+")";
+  $("#l-smax").textContent="Expected maximum ("+(inr?"LPA":"thousands per year")+")";
+}
+function addStepRow(s){
+  s=s||{};
+  var d=document.createElement("div");d.className="step-row";
+  d.innerHTML='<select class="s-type" aria-label="Round type">'+opts(STEP_TYPES,s.type||"Recruiter screen")+'</select>'+
+    '<input class="s-date" type="date" aria-label="Round date" value="'+esc(s.date||"")+'">'+
+    '<select class="s-result" aria-label="Round result">'+opts(STEP_RESULTS,s.result||"Scheduled")+'</select>'+
+    '<input class="s-notes" type="text" aria-label="Round notes" placeholder="Interviewer, topics, feedback" value="'+esc(s.notes||"")+'">'+
+    '<button type="button" class="icon-btn s-del" aria-label="Remove round">×</button>';
+  $("#steps").appendChild(d);
+}
+function openForm(a){
+  var isNew=!a;
+  state.editing=isNew?null:a.id;
+  a=a||blank();
+  $("#form-title").textContent=isNew?"New application":"Edit application";
+  var set=function(id,v){$("#"+id).value=v==null?"":v};
+  set("f-company",a.company);set("f-role",a.role);set("f-location",a.location);set("f-mode",a.workMode);
+  set("f-jobtype",a.jobType);set("f-source",a.source);set("f-url",a.url);set("f-status",a.status);
+  set("f-priority",a.priority);set("f-applied",a.appliedDate);set("f-followup",a.followUp);set("f-cur",a.currency);
+  payLabels();
+  var u=unitOf(a.currency);
+  set("f-smin",a.salaryMin?Math.round(a.salaryMin/u*100)/100:"");
+  set("f-smax",a.salaryMax?Math.round(a.salaryMax/u*100)/100:"");
+  set("f-jd",a.jd);set("f-notes",a.notes);set("f-contact",a.contact);set("f-cemail",a.contactEmail);
+  set("f-cphone",a.contactPhone);set("f-referral",a.referral);set("f-resume",a.resume);
+  set("f-tracker",a.trackerUrl);set("f-acc-email",a.accountEmail);set("f-acc-pass",a.accountPassword);
+  $("#f-acc-pass").type="password";$('[data-toggle-pass="f-acc-pass"]').textContent="Show";
+  $("#steps").innerHTML="";(a.steps||[]).forEach(addStepRow);
+  $("#form-err").hidden=true;
+  hide("#det-scrim");
+  show("#form-scrim");
+  $(".sheet-b","#form").scrollTop=0;
+  setTimeout(function(){if(isNew)$("#f-company").focus()},50);
+}
+function saveForm(e){
+  e.preventDefault();
+  var g=function(id){return $("#"+id).value.trim()};
+  var company=g("f-company"),role=g("f-role"),err=$("#form-err");
+  if(!company||!role){err.textContent="Company and job title are required.";err.hidden=false;return}
+  var existing=state.editing&&state.apps.find(function(x){return x.id===state.editing});
+  var a=existing?JSON.parse(JSON.stringify(existing)):blank();
+  var cur=$("#f-cur").value,u=unitOf(cur);
+  a.company=company;a.role=role;a.location=g("f-location");a.workMode=$("#f-mode").value;a.jobType=$("#f-jobtype").value;
+  a.source=$("#f-source").value;a.url=g("f-url");a.status=$("#f-status").value;a.priority=$("#f-priority").value;
+  a.appliedDate=$("#f-applied").value;a.followUp=$("#f-followup").value;a.currency=cur;
+  a.salaryMin=Math.round((parseFloat($("#f-smin").value)||0)*u);a.salaryMax=Math.round((parseFloat($("#f-smax").value)||0)*u);
+  a.jd=$("#f-jd").value.trim();a.notes=$("#f-notes").value.trim();a.contact=g("f-contact");a.contactEmail=g("f-cemail");
+  a.contactPhone=g("f-cphone");a.referral=g("f-referral");a.resume=g("f-resume");
+  a.trackerUrl=g("f-tracker");a.accountEmail=g("f-acc-email");a.accountPassword=$("#f-acc-pass").value;
+  a.steps=$$(".step-row").map(function(r){return {type:$(".s-type",r).value,date:$(".s-date",r).value,result:$(".s-result",r).value,notes:$(".s-notes",r).value.trim()}});
+  delete a.sample;
+  if(existing&&existing.sample) a.sample=true;
+  var btn=$("#form-save");btn.disabled=true;
+  Store.save(a).then(function(){
+    hide("#form-scrim");toast(existing?"Changes saved":"Application added");
+  }).catch(function(){}).then(function(){btn.disabled=false});
+}
 
-        /* attention */
-        var att = attention();
-        $("#att").innerHTML = att.length ? att.map(function (x) { return '<li data-id="' + esc(x.a.id) + '"><b>' + esc(x.a.company) + ' <span style="font-weight:400">· ' + esc(x.a.role) + '</span></b><span class="' + (x.late ? "flag late" : "") + '">' + esc(x.text) + "</span></li>" }).join("") : '<li style="cursor:default"><span style="text-align:left">Nothing is overdue. Applications with a follow-up date or 14 days of silence will show here.</span></li>';
+/* ---------- analytics ---------- */
+var charts={};
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function reached(a){
+  var st=a.status,steps=a.steps||[];
+  var light=["Recruiter screen","Online assessment"];
+  return {
+    applied:st!=="Wishlist",
+    screening:["Screening","Interview","Offer","Accepted"].indexOf(st)>=0||steps.length>0,
+    interview:["Interview","Offer","Accepted"].indexOf(st)>=0||steps.some(function(s){return light.indexOf(s.type)<0}),
+    offer:st==="Offer"||st==="Accepted"
+  };
+}
+function pct(n,d){return d?Math.round(n/d*100):0}
+function draw(id,cfg,hasData,msg){
+  var wrap=$("#w-"+id.replace("c-",""));
+  if(charts[id]){charts[id].destroy();delete charts[id]}
+  var none=wrap.querySelector(".cnone");if(none) none.remove();
+  var cv=wrap.querySelector("canvas");
+  if(!hasData){cv.style.display="none";var n=document.createElement("div");n.className="cnone";n.textContent=msg||"Nothing to chart yet.";wrap.appendChild(n);return}
+  cv.style.display="";
+  charts[id]=new Chart(cv,cfg);
+}
+function renderStats(){
+  if(!window.Chart){$("#kpis").innerHTML='<div class="panel" style="grid-column:1/-1">Charts need the Chart.js library, which did not load. Check your connection and reload.</div>';return}
+  var apps=state.apps,text=cssv("--muted"),line=cssv("--line"),surface=cssv("--surface"),textStrong=cssv("--text");
+  Chart.defaults.color=text;Chart.defaults.borderColor=line;
+  Chart.defaults.font.family='"DM Sans",system-ui,sans-serif';Chart.defaults.font.size=12;
+  var R=apps.map(reached);
+  var applied=R.filter(function(r){return r.applied}).length;
+  var responded=R.filter(function(r){return r.screening}).length;
+  var interviewed=R.filter(function(r){return r.interview}).length;
+  var offers=R.filter(function(r){return r.offer}).length;
+  var active=apps.filter(function(a){return ACTIVE.indexOf(a.status)>=0}).length;
+  var byCur={};
+  apps.forEach(function(a){
+    var lo=+a.salaryMin||0,hi=+a.salaryMax||0;if(!lo&&!hi) return;
+    var mid=lo&&hi?(lo+hi)/2:(lo||hi);(byCur[a.currency]=byCur[a.currency]||[]).push(mid);
+  });
+  var curKeys=Object.keys(byCur).sort(function(x,y){return byCur[y].length-byCur[x].length});
+  var avgPay="–",avgSub="No pay logged";
+  if(curKeys.length){var arr=byCur[curKeys[0]];avgPay=money(curKeys[0],arr.reduce(function(s,v){return s+v},0)/arr.length);avgSub="Midpoint, "+arr.length+" role"+(arr.length===1?"":"s")+" in "+curKeys[0]}
+  var kp=[
+    ["Applications",apps.length,applied+" applied"],
+    ["Active",active,"Still in play"],
+    ["Response rate",pct(responded,applied)+"%",responded+" of "+applied+" replied"],
+    ["Interview rate",pct(interviewed,applied)+"%",interviewed+" got to interviews"],
+    ["Offers",offers,pct(offers,applied)+"% of applied"],
+    ["Avg. expected pay",avgPay,avgSub]
+  ];
+  $("#kpis").innerHTML=kp.map(function(k){return '<div class="kpi"><div class="l">'+k[0]+'</div><div class="v mono" style="font-family:var(--font-display)">'+esc(k[1])+'</div><div class="s">'+esc(k[2])+"</div></div>"}).join("");
 
-        var tip = { backgroundColor: cssv("--surface-2"), titleColor: textStrong, bodyColor: textStrong, borderColor: line, borderWidth: 1, padding: 10, boxPadding: 4 };
-        var legend = { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 14 } };
+  /* attention */
+  var att=attention();
+  $("#att").innerHTML=att.length?att.map(function(x){return '<li data-id="'+esc(x.a.id)+'"><b>'+esc(x.a.company)+' <span style="font-weight:400">· '+esc(x.a.role)+'</span></b><span class="'+(x.late?"flag late":"")+'">'+esc(x.text)+"</span></li>"}).join(""):'<li style="cursor:default"><span style="text-align:left">Nothing is overdue. Applications with a follow-up date or 14 days of silence will show here.</span></li>';
 
-        /* status doughnut */
-        var sc = STATUSES.map(function (s) { return apps.filter(function (a) { return a.status === s }).length });
-        var idx = sc.map(function (v, i) { return v ? i : -1 }).filter(function (i) { return i >= 0 });
-        draw("c-status", {
-          type: "doughnut", data: { labels: idx.map(function (i) { return STATUSES[i] }), datasets: [{ data: idx.map(function (i) { return sc[i] }), backgroundColor: idx.map(function (i) { return STATUS_COLOR[STATUSES[i]] }), borderColor: surface, borderWidth: 3 }] },
-          options: { maintainAspectRatio: false, cutout: "62%", plugins: { legend: legend, tooltip: tip } }
-        }, apps.length > 0, "Add an application to see the breakdown.");
+  var tip={backgroundColor:cssv("--surface-2"),titleColor:textStrong,bodyColor:textStrong,borderColor:line,borderWidth:1,padding:10,boxPadding:4};
+  var legend={position:"bottom",labels:{boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}};
 
-        /* funnel */
-        var fv = [applied, responded, interviewed, offers];
-        var fl = ["Applied", "Replied", "Interview", "Offer"];
-        draw("c-funnel", {
-          type: "bar", data: { labels: fl.map(function (l, i) { return l + " (" + pct(fv[i], applied) + "%)" }), datasets: [{ data: fv, backgroundColor: ["#6ea8fe", "#4fc3d9", "#a78bfa", "#5ed38f"], borderRadius: 6, barThickness: 26 }] },
-          options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tip }, scales: { x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: line } }, y: { grid: { display: false } } } }
-        }, applied > 0, "Applications you have sent will form the funnel.");
+  /* status doughnut */
+  var sc=STATUSES.map(function(s){return apps.filter(function(a){return a.status===s}).length});
+  var idx=sc.map(function(v,i){return v?i:-1}).filter(function(i){return i>=0});
+  draw("c-status",{type:"doughnut",data:{labels:idx.map(function(i){return STATUSES[i]}),datasets:[{data:idx.map(function(i){return sc[i]}),backgroundColor:idx.map(function(i){return STATUS_COLOR[STATUSES[i]]}),borderColor:surface,borderWidth:3}]},
+    options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:legend,tooltip:tip}}},apps.length>0,"Add an application to see the breakdown.");
 
-        /* weekly */
-        var now = new Date(); now.setHours(0, 0, 0, 0);
-        var dow = (now.getDay() + 6) % 7; var mon = new Date(now); mon.setDate(mon.getDate() - dow);
-        var weeks = [], wl = [];
-        for (var i = 11; i >= 0; i--) { var w = new Date(mon); w.setDate(w.getDate() - i * 7); weeks.push(ymd(w)); wl.push(w.toLocaleDateString("en-IN", { day: "numeric", month: "short" })) }
-        var wc = weeks.map(function (ws, i) {
-          var we = i < 11 ? weeks[i + 1] : addDays(weeks[11], 7);
-          return apps.filter(function (a) { return a.appliedDate && a.appliedDate >= ws && a.appliedDate < we }).length;
-        });
-        var anyWeek = apps.some(function (a) { return a.appliedDate });
-        draw("c-weekly", {
-          type: "bar", data: { labels: wl, datasets: [{ label: "Applications", data: wc, backgroundColor: cssv("--accent"), borderRadius: 5, maxBarThickness: 34 }] },
-          options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tip }, scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: line } }, x: { grid: { display: false } } } }
-        }, anyWeek, "Dates you applied will show here.");
+  /* funnel */
+  var fv=[applied,responded,interviewed,offers];
+  var fl=["Applied","Replied","Interview","Offer"];
+  draw("c-funnel",{type:"bar",data:{labels:fl.map(function(l,i){return l+" ("+pct(fv[i],applied)+"%)"}),datasets:[{data:fv,backgroundColor:["#6ea8fe","#4fc3d9","#a78bfa","#5ed38f"],borderRadius:6,barThickness:26}]},
+    options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},scales:{x:{beginAtZero:true,ticks:{precision:0},grid:{color:line}},y:{grid:{display:false}}}}},applied>0,"Applications you have sent will form the funnel.");
 
-        /* source */
-        var sm = {};
-        apps.forEach(function (a, i) { if (!R[i].applied) return; var s = a.source || "Other"; sm[s] = sm[s] || { n: 0, r: 0 }; sm[s].n++; if (R[i].interview) sm[s].r++ });
-        var sk = Object.keys(sm).sort(function (x, y) { return sm[y].n - sm[x].n }).slice(0, 8);
-        draw("c-source", {
-          type: "bar", data: {
-            labels: sk, datasets: [
-              { label: "Applied", data: sk.map(function (k) { return sm[k].n }), backgroundColor: "#6ea8fe", borderRadius: 4, maxBarThickness: 18 },
-              { label: "Reached interview", data: sk.map(function (k) { return sm[k].r }), backgroundColor: "#a78bfa", borderRadius: 4, maxBarThickness: 18 }]
-          },
-          options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: legend, tooltip: tip }, scales: { x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: line } }, y: { grid: { display: false } } } }
-        }, sk.length > 0, "Applications will be grouped by source.");
+  /* weekly */
+  var now=new Date();now.setHours(0,0,0,0);
+  var dow=(now.getDay()+6)%7;var mon=new Date(now);mon.setDate(mon.getDate()-dow);
+  var weeks=[],wl=[];
+  for(var i=11;i>=0;i--){var w=new Date(mon);w.setDate(w.getDate()-i*7);weeks.push(ymd(w));wl.push(w.toLocaleDateString("en-IN",{day:"numeric",month:"short"}))}
+  var wc=weeks.map(function(ws,i){
+    var we=i<11?weeks[i+1]:addDays(weeks[11],7);
+    return apps.filter(function(a){return a.appliedDate&&a.appliedDate>=ws&&a.appliedDate<we}).length;
+  });
+  var anyWeek=apps.some(function(a){return a.appliedDate});
+  draw("c-weekly",{type:"bar",data:{labels:wl,datasets:[{label:"Applications",data:wc,backgroundColor:cssv("--accent"),borderRadius:5,maxBarThickness:34}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:line}},x:{grid:{display:false}}}}},anyWeek,"Dates you applied will show here.");
 
-        /* rounds */
-        var rm = {};
-        apps.forEach(function (a) {
-          (a.steps || []).forEach(function (s) {
-            var t = s.type; rm[t] = rm[t] || { Passed: 0, Open: 0, Failed: 0 };
-            if (s.result === "Passed") rm[t].Passed++; else if (s.result === "Failed") rm[t].Failed++; else if (s.result !== "Cancelled") rm[t].Open++
-          })
-        });
-        var rk = STEP_TYPES.filter(function (t) { return rm[t] && (rm[t].Passed + rm[t].Failed + rm[t].Open) > 0 });
-        draw("c-rounds", {
-          type: "bar", data: {
-            labels: rk, datasets: [
-              { label: "Passed", data: rk.map(function (k) { return rm[k].Passed }), backgroundColor: "#5ed38f", maxBarThickness: 18 },
-              { label: "Upcoming", data: rk.map(function (k) { return rm[k].Open }), backgroundColor: "#6ea8fe", maxBarThickness: 18 },
-              { label: "Failed", data: rk.map(function (k) { return rm[k].Failed }), backgroundColor: "#ef6b73", maxBarThickness: 18 }]
-          },
-          options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: legend, tooltip: tip }, scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: line } }, y: { stacked: true, grid: { display: false } } } }
-        }, rk.length > 0, "Log interview rounds to see pass and fail rates.");
+  /* source */
+  var sm={};
+  apps.forEach(function(a,i){if(!R[i].applied) return;var s=a.source||"Other";sm[s]=sm[s]||{n:0,r:0};sm[s].n++;if(R[i].interview) sm[s].r++});
+  var sk=Object.keys(sm).sort(function(x,y){return sm[y].n-sm[x].n}).slice(0,8);
+  draw("c-source",{type:"bar",data:{labels:sk,datasets:[
+    {label:"Applied",data:sk.map(function(k){return sm[k].n}),backgroundColor:"#6ea8fe",borderRadius:4,maxBarThickness:18},
+    {label:"Reached interview",data:sk.map(function(k){return sm[k].r}),backgroundColor:"#a78bfa",borderRadius:4,maxBarThickness:18}]},
+    options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:legend,tooltip:tip},scales:{x:{beginAtZero:true,ticks:{precision:0},grid:{color:line}},y:{grid:{display:false}}}}},sk.length>0,"Applications will be grouped by source.");
 
-        /* work mode */
-        var mc = MODES.map(function (m) { return apps.filter(function (a) { return a.workMode === m }).length });
-        var mi = mc.map(function (v, i) { return v ? i : -1 }).filter(function (i) { return i >= 0 });
-        var modeCol = { Onsite: "#f0b25e", Hybrid: "#4fc3d9", Remote: "#a78bfa" };
-        draw("c-mode", {
-          type: "doughnut", data: { labels: mi.map(function (i) { return MODES[i] }), datasets: [{ data: mi.map(function (i) { return mc[i] }), backgroundColor: mi.map(function (i) { return modeCol[MODES[i]] }), borderColor: surface, borderWidth: 3 }] },
-          options: { maintainAspectRatio: false, cutout: "62%", plugins: { legend: legend, tooltip: tip } }
-        }, apps.length > 0, "Add an application to see the split.");
+  /* rounds */
+  var rm={};
+  apps.forEach(function(a){(a.steps||[]).forEach(function(s){var t=s.type;rm[t]=rm[t]||{Passed:0,Open:0,Failed:0};
+    if(s.result==="Passed") rm[t].Passed++;else if(s.result==="Failed") rm[t].Failed++;else if(s.result!=="Cancelled") rm[t].Open++})});
+  var rk=STEP_TYPES.filter(function(t){return rm[t]&&(rm[t].Passed+rm[t].Failed+rm[t].Open)>0});
+  draw("c-rounds",{type:"bar",data:{labels:rk,datasets:[
+    {label:"Passed",data:rk.map(function(k){return rm[k].Passed}),backgroundColor:"#5ed38f",maxBarThickness:18},
+    {label:"Upcoming",data:rk.map(function(k){return rm[k].Open}),backgroundColor:"#6ea8fe",maxBarThickness:18},
+    {label:"Failed",data:rk.map(function(k){return rm[k].Failed}),backgroundColor:"#ef6b73",maxBarThickness:18}]},
+    options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:legend,tooltip:tip},scales:{x:{stacked:true,beginAtZero:true,ticks:{precision:0},grid:{color:line}},y:{stacked:true,grid:{display:false}}}}},rk.length>0,"Log interview rounds to see pass and fail rates.");
 
-        /* priority response */
-        var pv = PRIORITIES.map(function (p) {
-          var ids = apps.map(function (a, i) { return a.priority === p && R[i].applied ? i : -1 }).filter(function (i) { return i >= 0 });
-          var rep = ids.filter(function (i) { return R[i].screening }).length;
-          return { n: ids.length, p: pct(rep, ids.length) };
-        });
-        draw("c-prio", {
-          type: "bar", data: { labels: PRIORITIES.map(function (p, i) { return p + " (" + pv[i].n + ")" }), datasets: [{ label: "Replied (%)", data: pv.map(function (x) { return x.p }), backgroundColor: ["#ef6b73", "#f0b25e", "#8c97b8"], borderRadius: 6, maxBarThickness: 44 }] },
-          options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tip }, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: function (v) { return v + "%" } }, grid: { color: line } }, x: { grid: { display: false } } } }
-        }, applied > 0, "Applied roles will be compared by priority.");
-      }
+  /* work mode */
+  var mc=MODES.map(function(m){return apps.filter(function(a){return a.workMode===m}).length});
+  var mi=mc.map(function(v,i){return v?i:-1}).filter(function(i){return i>=0});
+  var modeCol={Onsite:"#f0b25e",Hybrid:"#4fc3d9",Remote:"#a78bfa"};
+  draw("c-mode",{type:"doughnut",data:{labels:mi.map(function(i){return MODES[i]}),datasets:[{data:mi.map(function(i){return mc[i]}),backgroundColor:mi.map(function(i){return modeCol[MODES[i]]}),borderColor:surface,borderWidth:3}]},
+    options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:legend,tooltip:tip}}},apps.length>0,"Add an application to see the split.");
 
-      /* ---------- storage view ---------- */
-      function renderStorage() {
-        var s = $("#store-status"), cfg = getConfig();
-        if (Store.mode === "firebase") {
-          s.innerHTML = Store.error ? '<span class="note bad">Connected to project <b>' + esc(cfg.projectId) + "</b> but Firestore returned an error: " + esc(Store.error) + ". Check that Firestore is created and your rules allow access.</span>" : "Synced live with Firestore project <b>" + esc(cfg.projectId) + "</b>, collection <code>" + COLL + "</code>. Changes appear on every device that uses the same config.";
-        } else {
-          s.innerHTML = (Store.error ? '<span class="note bad">' + esc(Store.error) + "</span><br>" : "") + "Saved in this browser only. Connect Firebase below to keep your data safe and use it on other devices.";
-        }
-        var baked = !!FIREBASE_CONFIG;
-        $("#perm").hidden = !cfg;
-        $("#perm-tools").hidden = baked;
-        $("#perm-note").textContent = baked ? "The config is saved inside this file, so it survives clearing your browser data." : "The config is currently kept in this browser, so clearing site data removes it. Save it into the file itself and it stays, even on a fresh browser.";
-        if (cfg && !baked) $("#perm-line").value = "var FIREBASE_CONFIG = " + JSON.stringify(cfg, null, 2) + ";";
-        $("#cfg-off").hidden = !cfg || baked;
-        $("#cfg-up").hidden = !(cfg && Store.mode === "firebase" && Store.localLoad().length);
-        $("#clear-sample").hidden = !state.apps.some(function (a) { return a.sample });
-        if (cfg && !$("#cfg").value) $("#cfg").value = JSON.stringify(cfg, null, 2);
-        var sync = $("#sync");
-        sync.className = "sync" + (Store.mode === "firebase" ? (Store.error ? " err" : " ok") : "");
-        sync.lastChild.textContent = Store.mode === "firebase" ? (Store.error ? "Firebase error" : "Firebase live") : "Local only";
-      }
+  /* priority response */
+  var pv=PRIORITIES.map(function(p){
+    var ids=apps.map(function(a,i){return a.priority===p&&R[i].applied?i:-1}).filter(function(i){return i>=0});
+    var rep=ids.filter(function(i){return R[i].screening}).length;
+    return {n:ids.length,p:pct(rep,ids.length)};
+  });
+  draw("c-prio",{type:"bar",data:{labels:PRIORITIES.map(function(p,i){return p+" ("+pv[i].n+")"}),datasets:[{label:"Replied (%)",data:pv.map(function(x){return x.p}),backgroundColor:["#ef6b73","#f0b25e","#8c97b8"],borderRadius:6,maxBarThickness:44}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},scales:{y:{beginAtZero:true,max:100,ticks:{callback:function(v){return v+"%"}},grid:{color:line}},x:{grid:{display:false}}}}},applied>0,"Applied roles will be compared by priority.");
+}
 
-      /* ---------- navigation + refresh ---------- */
-      function setTab(t) {
-        state.tab = t;
-        $$(".tab").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tab === t) });
-        $("#view-apps").hidden = t !== "apps"; $("#view-stats").hidden = t !== "stats"; $("#view-set").hidden = t !== "set";
-        $("#fab").hidden = t !== "apps";
-        refresh(); window.scrollTo(0, 0);
-      }
-      function refresh() {
-        renderApps(); renderStorage();
-        if (state.tab === "stats") renderStats();
-        if (!$("#det-scrim").hidden && state.detailId) {
-          if (state.apps.some(function (a) { return a.id === state.detailId })) {
-            var sel = document.activeElement && document.activeElement.id === "det-status";
-            if (!sel) openDetail(state.detailId);
-          } else hide("#det-scrim");
-        }
-      }
+/* ---------- storage view ---------- */
+function renderStorage(){
+  var s=$("#store-status"),cfg=getConfig();
+  if(Store.mode==="firebase"){
+    s.innerHTML=Store.error?'<span class="note bad">Connected to project <b>'+esc(cfg.projectId)+"</b> but Firestore returned an error: "+esc(Store.error)+". Check that Firestore is created and your rules allow access.</span>":"Synced live with Firestore project <b>"+esc(cfg.projectId)+"</b>, collection <code>"+COLL+"</code>. Changes appear on every device that uses the same config.";
+  }else{
+    s.innerHTML=(Store.error?'<span class="note bad">'+esc(Store.error)+"</span><br>":"")+"Saved in this browser only. Connect Firebase below to keep your data safe and use it on other devices.";
+  }
+  var baked=!!FIREBASE_CONFIG;
+  $("#perm").hidden=!cfg;
+  $("#perm-tools").hidden=baked;
+  $("#perm-note").textContent=baked?"The config is saved inside this file, so it survives clearing your browser data.":"The config is currently kept in this browser, so clearing site data removes it. Save it into the file itself and it stays, even on a fresh browser.";
+  if(cfg&&!baked) $("#perm-line").value="var FIREBASE_CONFIG = "+JSON.stringify(cfg,null,2)+";";
+  $("#cfg-off").hidden=!cfg||baked;
+  $("#cfg-up").hidden=!(cfg&&Store.mode==="firebase"&&Store.localLoad().length);
+  $("#clear-sample").hidden=!state.apps.some(function(a){return a.sample});
+  if(cfg&&!$("#cfg").value) $("#cfg").value=JSON.stringify(cfg,null,2);
+  var sync=$("#sync");
+  sync.className="sync"+(Store.mode==="firebase"?(Store.error?" err":" ok"):"");
+  sync.lastChild.textContent=Store.mode==="firebase"?(Store.error?"Firebase error":"Firebase live"):"Local only";
+}
 
-      /* ---------- events ---------- */
-      function bind() {
-        $("#tabs").addEventListener("click", function (e) { var b = e.target.closest(".tab"); if (b) setTab(b.dataset.tab) });
-        $("#btn-new").addEventListener("click", function () { openForm() });
-        $("#fab").addEventListener("click", function () { openForm() });
-        $("#q").addEventListener("input", function (e) { state.q = e.target.value; renderApps() });
-        $("#sort").addEventListener("change", function (e) { state.sort = e.target.value; renderApps() });
-        $("#chips").addEventListener("click", function (e) { var b = e.target.closest(".chip"); if (b) { state.group = b.dataset.g; renderApps() } });
-        $("#list").addEventListener("click", function (e) {
-          var act = e.target.closest("[data-act]");
-          if (act) { if (act.dataset.act === "new") openForm(); else loadSample(); return }
-          var c = e.target.closest(".card"); if (c) openDetail(c.dataset.id);
-        });
-        $("#list").addEventListener("keydown", function (e) {
-          if (e.key !== "Enter" && e.key !== " ") return;
-          var c = e.target.closest(".card"); if (c) { e.preventDefault(); openDetail(c.dataset.id) }
-        });
-        $("#att").addEventListener("click", function (e) { var li = e.target.closest("li[data-id]"); if (li) openDetail(li.dataset.id) });
-        $("#form").addEventListener("submit", saveForm);
-        $("#f-cur").addEventListener("change", payLabels);
-        $("#add-step").addEventListener("click", function () { addStepRow(); var r = $$(".step-row"); r[r.length - 1].scrollIntoView({ block: "center" }) });
-        $("#steps").addEventListener("click", function (e) { var b = e.target.closest(".s-del"); if (b) b.closest(".step-row").remove() });
-        $$("[data-close]").forEach(function (b) { b.addEventListener("click", function () { hide("#form-scrim"); hide("#det-scrim") }) });
-        ["#form-scrim", "#det-scrim"].forEach(function (s) { $(s).addEventListener("mousedown", function (e) { if (e.target === $(s)) hide(s) }) });
-        document.addEventListener("keydown", function (e) { if (e.key === "Escape") { hide("#form-scrim"); hide("#det-scrim") } });
-        $("#det-edit").addEventListener("click", function () { var a = state.apps.find(function (x) { return x.id === state.detailId }); if (a) openForm(a) });
-        $("#det-body").addEventListener("change", function (e) {
-          if (e.target.id !== "det-status") return;
-          var a = state.apps.find(function (x) { return x.id === state.detailId }); if (!a) return;
-          var b = JSON.parse(JSON.stringify(a)); b.status = e.target.value;
-          if (b.status !== "Wishlist" && !b.appliedDate) b.appliedDate = todayStr();
-          Store.save(b).then(function () { toast("Moved to " + b.status) });
-        });
-        $("#det-del").addEventListener("click", function () {
-          var btn = $("#det-del");
-          if (!btn.classList.contains("armed")) {
-            btn.classList.add("armed"); btn.textContent = "Tap again to delete";
-            clearTimeout(btn.t); btn.t = setTimeout(function () { btn.classList.remove("armed"); btn.textContent = "Delete" }, 4000); return;
-          }
-          var id = state.detailId; hide("#det-scrim"); state.detailId = null;
-          Store.remove(id).then(function () { toast("Application deleted") });
-        });
+/* ---------- navigation + refresh ---------- */
+function setTab(t){
+  state.tab=t;
+  $$(".tab").forEach(function(b){b.setAttribute("aria-selected",b.dataset.tab===t)});
+  $("#view-apps").hidden=t!=="apps";$("#view-stats").hidden=t!=="stats";$("#view-set").hidden=t!=="set";
+  $("#fab").hidden=t!=="apps";
+  refresh();window.scrollTo(0,0);
+}
+function refresh(){
+  renderApps();renderStorage();
+  if(state.tab==="stats") renderStats();
+  if(!$("#det-scrim").hidden&&state.detailId){
+    if(state.apps.some(function(a){return a.id===state.detailId})){
+      var sel=document.activeElement&&document.activeElement.id==="det-status";
+      if(!sel) openDetail(state.detailId);
+    }else hide("#det-scrim");
+  }
+}
 
-        /* storage tab */
-        $("#cfg-save").addEventListener("click", function () {
-          var cfg = parseConfig($("#cfg").value), err = $("#cfg-err");
-          var need = ["apiKey", "projectId", "appId"].filter(function (k) { return !cfg[k] });
-          if (need.length) { err.textContent = "Missing " + need.join(", ") + ". Paste the whole firebaseConfig object from Project settings."; err.hidden = false; return }
-          err.hidden = true;
-          try { localStorage.setItem(LS_CFG, JSON.stringify(cfg)) } catch (e) { err.textContent = "This browser blocked saving the config."; err.hidden = false; return }
-          location.reload();
-        });
-        $("#cfg-off").addEventListener("click", function () { try { localStorage.removeItem(LS_CFG) } catch (e) { } location.reload() });
-        $("#perm-copy").addEventListener("click", function () {
-          var ta = $("#perm-line"); ta.select();
-          (navigator.clipboard ? navigator.clipboard.writeText(ta.value) : Promise.reject()).then(function () { toast("Config line copied") }, function () { try { document.execCommand("copy"); toast("Config line copied") } catch (e) { toast("Press Ctrl+C to copy") } });
-        });
-        $("#perm-dl").addEventListener("click", function () {
-          var cfg = getConfig(); if (!cfg) return;
-          fetch(location.href).then(function (r) { if (!r.ok) throw new Error("x"); return r.text() }).then(function (src) {
-            var needle = "var FIREBASE_CONFIG = " + "null;";
-            if (src.indexOf(needle) < 0) throw new Error("x");
-            var out = src.replace(needle, function () { return "var FIREBASE_CONFIG = " + JSON.stringify(cfg, null, 2) + ";" });
-            var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out], { type: "text/html" })); a.download = "job-tracker.html";
-            document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href) }, 1000);
-            toast("Downloaded with config saved");
-          }).catch(function () { toast("Could not build the file here. Use Copy config line instead.") });
-        });
-        $("#cfg-up").addEventListener("click", function () {
-          var local = Store.localLoad(), b = firebase.firestore().batch();
-          local.forEach(function (a) { b.set(Store.db.collection(COLL).doc(a.id), a) });
-          b.commit().then(function () { toast("Uploaded " + local.length + " applications") }).catch(function (e) { toast("Upload failed: " + e.message) });
-        });
-        $("#exp").addEventListener("click", function () {
-          var blob = new Blob([JSON.stringify(state.apps, null, 2)], { type: "application/json" });
-          var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "job-applications-" + todayStr() + ".json";
-          document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href) }, 1000);
-        });
-        $("#imp").addEventListener("change", function (e) {
-          var f = e.target.files[0]; if (!f) return;
-          var r = new FileReader();
-          r.onload = function () {
-            try {
-              var list = JSON.parse(r.result); if (!Array.isArray(list)) throw new Error("bad");
-              var n = 0, jobs = [];
-              list.forEach(function (x) { if (x && x.company && x.role) { jobs.push(Store.save(blank(x))); n++ } });
-              Promise.all(jobs).then(function () { toast("Imported " + n + " applications") });
-            } catch (err) { toast("That file is not a valid export") }
-            e.target.value = "";
-          };
-          r.readAsText(f);
-        });
-        $("#clear-sample").addEventListener("click", function () {
-          var ids = state.apps.filter(function (a) { return a.sample }).map(function (a) { return a.id });
-          Promise.all(ids.map(function (id) { return Store.remove(id) })).then(function () { toast("Sample data removed") });
-        });
-      }
-      function loadSample() {
-        Promise.all(sampleApps().map(function (a) { return Store.save(a) })).then(function () { toast("Sample data added") });
-      }
+/* ---------- events ---------- */
+function bind(){
+  $("#tabs").addEventListener("click",function(e){var b=e.target.closest(".tab");if(b) setTab(b.dataset.tab)});
+  $("#btn-new").addEventListener("click",function(){openForm()});
+  $("#fab").addEventListener("click",function(){openForm()});
+  $("#q").addEventListener("input",function(e){state.q=e.target.value;renderApps()});
+  $("#sort").addEventListener("change",function(e){state.sort=e.target.value;renderApps()});
+  $("#chips").addEventListener("click",function(e){var b=e.target.closest(".chip");if(b){state.group=b.dataset.g;renderApps()}});
+  $("#list").addEventListener("click",function(e){
+    var act=e.target.closest("[data-act]");
+    if(act){if(act.dataset.act==="new") openForm();else loadSample();return}
+    var c=e.target.closest(".card");if(c) openDetail(c.dataset.id);
+  });
+  $("#list").addEventListener("keydown",function(e){
+    if(e.key!=="Enter"&&e.key!==" ") return;
+    var c=e.target.closest(".card");if(c){e.preventDefault();openDetail(c.dataset.id)}
+  });
+  $("#att").addEventListener("click",function(e){var li=e.target.closest("li[data-id]");if(li) openDetail(li.dataset.id)});
+  $("#form").addEventListener("submit",saveForm);
+  $("#f-cur").addEventListener("change",payLabels);
+  $("#add-step").addEventListener("click",function(){addStepRow();var r=$$(".step-row");r[r.length-1].scrollIntoView({block:"center"})});
+  $("#steps").addEventListener("click",function(e){var b=e.target.closest(".s-del");if(b) b.closest(".step-row").remove()});
+  $$("[data-close]").forEach(function(b){b.addEventListener("click",function(){hide("#form-scrim");hide("#det-scrim")})});
+  ["#form-scrim","#det-scrim"].forEach(function(s){$(s).addEventListener("mousedown",function(e){if(e.target===$(s)) hide(s)})});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){hide("#form-scrim");hide("#det-scrim")}});
+  $("#det-edit").addEventListener("click",function(){var a=state.apps.find(function(x){return x.id===state.detailId});if(a) openForm(a)});
+  function copyText(text,label){
+    if(!text){toast("Nothing to copy");return}
+    var fallback=function(){
+      var t=document.createElement("textarea");t.value=text;t.style.position="fixed";t.style.opacity="0";
+      document.body.appendChild(t);t.select();
+      try{document.execCommand("copy");toast(label+" copied")}catch(e){toast("Could not copy")}
+      t.remove();
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){toast(label+" copied")},fallback);
+    else fallback();
+  }
+  $("#det-body").addEventListener("click",function(e){
+    var a=state.apps.find(function(x){return x.id===state.detailId});if(!a) return;
+    var c=e.target.closest("[data-copy]");
+    if(c){var k=c.dataset.copy;copyText(a[k],k==="accountEmail"?"Email":"Password");return}
+    var r=e.target.closest("[data-reveal]");
+    if(r){
+      var p=$("#det-pass"),shown=p.dataset.shown==="1";
+      p.textContent=shown?"••••••••":a.accountPassword;
+      p.dataset.shown=shown?"0":"1";r.textContent=shown?"Show":"Hide";
+    }
+  });
+  $("#form").addEventListener("click",function(e){
+    var c=e.target.closest("[data-copy-from]");
+    if(c){var id=c.dataset.copyFrom;copyText($("#"+id).value,id==="f-acc-pass"?"Password":"Email");return}
+    var t=e.target.closest("[data-toggle-pass]");
+    if(t){var i=$("#"+t.dataset.togglePass),show=i.type==="password";i.type=show?"text":"password";t.textContent=show?"Hide":"Show"}
+  });
+  $("#det-body").addEventListener("change",function(e){
+    if(e.target.id!=="det-status") return;
+    var a=state.apps.find(function(x){return x.id===state.detailId});if(!a) return;
+    var b=JSON.parse(JSON.stringify(a));b.status=e.target.value;
+    if(b.status!=="Wishlist"&&!b.appliedDate) b.appliedDate=todayStr();
+    Store.save(b).then(function(){toast("Moved to "+b.status)});
+  });
+  $("#det-del").addEventListener("click",function(){
+    var btn=$("#det-del");
+    if(!btn.classList.contains("armed")){
+      btn.classList.add("armed");btn.textContent="Tap again to delete";
+      clearTimeout(btn.t);btn.t=setTimeout(function(){btn.classList.remove("armed");btn.textContent="Delete"},4000);return;
+    }
+    var id=state.detailId;hide("#det-scrim");state.detailId=null;
+    Store.remove(id).then(function(){toast("Application deleted")});
+  });
 
-      /* ---------- init ---------- */
-      fillSelects(); bind(); Store.start(); setTab("apps");
-    })();
-  </script>
+  /* storage tab */
+  $("#cfg-save").addEventListener("click",function(){
+    var cfg=parseConfig($("#cfg").value),err=$("#cfg-err");
+    var need=["apiKey","projectId","appId"].filter(function(k){return !cfg[k]});
+    if(need.length){err.textContent="Missing "+need.join(", ")+". Paste the whole firebaseConfig object from Project settings.";err.hidden=false;return}
+    err.hidden=true;
+    try{localStorage.setItem(LS_CFG,JSON.stringify(cfg))}catch(e){err.textContent="This browser blocked saving the config.";err.hidden=false;return}
+    location.reload();
+  });
+  $("#cfg-off").addEventListener("click",function(){try{localStorage.removeItem(LS_CFG)}catch(e){}location.reload()});
+  $("#perm-copy").addEventListener("click",function(){
+    var ta=$("#perm-line");ta.select();
+    (navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(function(){toast("Config line copied")},function(){try{document.execCommand("copy");toast("Config line copied")}catch(e){toast("Press Ctrl+C to copy")}});
+  });
+  $("#perm-dl").addEventListener("click",function(){
+    var cfg=getConfig();if(!cfg) return;
+    fetch(location.href).then(function(r){if(!r.ok) throw new Error("x");return r.text()}).then(function(src){
+      var needle="var FIREBASE_CONFIG = "+"null;";
+      if(src.indexOf(needle)<0) throw new Error("x");
+      var out=src.replace(needle,function(){return "var FIREBASE_CONFIG = "+JSON.stringify(cfg,null,2)+";"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"text/html"}));a.download="job-tracker.html";
+      document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+      toast("Downloaded with config saved");
+    }).catch(function(){toast("Could not build the file here. Use Copy config line instead.")});
+  });
+  $("#cfg-up").addEventListener("click",function(){
+    var local=Store.localLoad(),b=firebase.firestore().batch();
+    local.forEach(function(a){b.set(Store.db.collection(COLL).doc(a.id),a)});
+    b.commit().then(function(){toast("Uploaded "+local.length+" applications")}).catch(function(e){toast("Upload failed: "+e.message)});
+  });
+  $("#exp").addEventListener("click",function(){
+    var blob=new Blob([JSON.stringify(state.apps,null,2)],{type:"application/json"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="job-applications-"+todayStr()+".json";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+  });
+  $("#imp").addEventListener("change",function(e){
+    var f=e.target.files[0];if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var list=JSON.parse(r.result);if(!Array.isArray(list)) throw new Error("bad");
+        var n=0,jobs=[];
+        list.forEach(function(x){if(x&&x.company&&x.role){jobs.push(Store.save(blank(x)));n++}});
+        Promise.all(jobs).then(function(){toast("Imported "+n+" applications")});
+      }catch(err){toast("That file is not a valid export")}
+      e.target.value="";
+    };
+    r.readAsText(f);
+  });
+  $("#clear-sample").addEventListener("click",function(){
+    var ids=state.apps.filter(function(a){return a.sample}).map(function(a){return a.id});
+    Promise.all(ids.map(function(id){return Store.remove(id)})).then(function(){toast("Sample data removed")});
+  });
+}
+function loadSample(){
+  Promise.all(sampleApps().map(function(a){return Store.save(a)})).then(function(){toast("Sample data added")});
+}
+
+/* ---------- init ---------- */
+fillSelects();bind();Store.start();setTab("apps");
+})();
+</script>
 </body>
-
 </html>
